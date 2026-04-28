@@ -1,0 +1,11 @@
+{
+  "name": "entangled-body",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Entangled Body monorepo bootstrap",
+  "scripts": {
+    "setup": "bash ./scripts/setup.sh",
+    "dev": "bash ./scripts/dev.sh",
+    "api:dev": "bash ./scripts/dev.sh"
+  }
+}
