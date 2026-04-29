@@ -291,7 +291,6 @@ User click
   - Vercel (recommended)
 - Provides:
   - Static + dynamic rendering
-
 ---
 
 ### Backend
