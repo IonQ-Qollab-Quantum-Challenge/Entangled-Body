@@ -5,6 +5,9 @@ __pycache__/
 
 # Node
 node_modules/
+.next/
+apps/web/.next/
+tsconfig.tsbuildinfo
 
 # Env / secrets
 .env

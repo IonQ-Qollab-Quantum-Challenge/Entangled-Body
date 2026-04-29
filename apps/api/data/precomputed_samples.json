@@ -1,0 +1,77 @@
+{
+  "source": "precomputed",
+  "samples": {
+    "head": {
+      "region": "head",
+      "regionStates": {
+        "head": { "activation": 0.54, "coherence": 0.48, "displacement": 0.1 },
+        "torso": { "activation": 0.28, "coherence": 0.34, "displacement": 0.04 },
+        "leftArm": { "activation": 0.16, "coherence": 0.22, "displacement": -0.02 },
+        "rightArm": { "activation": 0.16, "coherence": 0.22, "displacement": 0.02 },
+        "leftLeg": { "activation": 0.1, "coherence": 0.18, "displacement": -0.03 },
+        "rightLeg": { "activation": 0.1, "coherence": 0.18, "displacement": 0.03 }
+      },
+      "entanglementLinks": [{ "source": "head", "target": "torso", "strength": 0.41 }]
+    },
+    "torso": {
+      "region": "torso",
+      "regionStates": {
+        "head": { "activation": 0.22, "coherence": 0.34, "displacement": 0.02 },
+        "torso": { "activation": 0.58, "coherence": 0.52, "displacement": 0.08 },
+        "leftArm": { "activation": 0.24, "coherence": 0.32, "displacement": -0.05 },
+        "rightArm": { "activation": 0.24, "coherence": 0.32, "displacement": 0.05 },
+        "leftLeg": { "activation": 0.18, "coherence": 0.26, "displacement": -0.03 },
+        "rightLeg": { "activation": 0.18, "coherence": 0.26, "displacement": 0.03 }
+      },
+      "entanglementLinks": [{ "source": "torso", "target": "leftArm", "strength": 0.34 }, { "source": "torso", "target": "rightLeg", "strength": 0.32 }]
+    },
+    "leftArm": {
+      "region": "leftArm",
+      "regionStates": {
+        "head": { "activation": 0.12, "coherence": 0.2, "displacement": 0.0 },
+        "torso": { "activation": 0.25, "coherence": 0.31, "displacement": -0.03 },
+        "leftArm": { "activation": 0.56, "coherence": 0.46, "displacement": -0.12 },
+        "rightArm": { "activation": 0.3, "coherence": 0.36, "displacement": 0.08 },
+        "leftLeg": { "activation": 0.12, "coherence": 0.18, "displacement": -0.02 },
+        "rightLeg": { "activation": 0.1, "coherence": 0.18, "displacement": 0.02 }
+      },
+      "entanglementLinks": [{ "source": "leftArm", "target": "rightArm", "strength": 0.42 }]
+    },
+    "rightArm": {
+      "region": "rightArm",
+      "regionStates": {
+        "head": { "activation": 0.12, "coherence": 0.2, "displacement": 0.0 },
+        "torso": { "activation": 0.25, "coherence": 0.31, "displacement": 0.03 },
+        "leftArm": { "activation": 0.3, "coherence": 0.36, "displacement": -0.08 },
+        "rightArm": { "activation": 0.56, "coherence": 0.46, "displacement": 0.12 },
+        "leftLeg": { "activation": 0.1, "coherence": 0.18, "displacement": -0.02 },
+        "rightLeg": { "activation": 0.12, "coherence": 0.18, "displacement": 0.02 }
+      },
+      "entanglementLinks": [{ "source": "leftArm", "target": "rightArm", "strength": 0.42 }]
+    },
+    "leftLeg": {
+      "region": "leftLeg",
+      "regionStates": {
+        "head": { "activation": 0.08, "coherence": 0.16, "displacement": 0.0 },
+        "torso": { "activation": 0.18, "coherence": 0.26, "displacement": -0.02 },
+        "leftArm": { "activation": 0.12, "coherence": 0.18, "displacement": -0.02 },
+        "rightArm": { "activation": 0.1, "coherence": 0.18, "displacement": 0.02 },
+        "leftLeg": { "activation": 0.52, "coherence": 0.44, "displacement": -0.14 },
+        "rightLeg": { "activation": 0.3, "coherence": 0.35, "displacement": 0.1 }
+      },
+      "entanglementLinks": [{ "source": "leftLeg", "target": "rightLeg", "strength": 0.4 }]
+    },
+    "rightLeg": {
+      "region": "rightLeg",
+      "regionStates": {
+        "head": { "activation": 0.08, "coherence": 0.16, "displacement": 0.0 },
+        "torso": { "activation": 0.18, "coherence": 0.26, "displacement": 0.02 },
+        "leftArm": { "activation": 0.1, "coherence": 0.18, "displacement": -0.02 },
+        "rightArm": { "activation": 0.12, "coherence": 0.18, "displacement": 0.02 },
+        "leftLeg": { "activation": 0.3, "coherence": 0.35, "displacement": -0.1 },
+        "rightLeg": { "activation": 0.52, "coherence": 0.44, "displacement": 0.14 }
+      },
+      "entanglementLinks": [{ "source": "leftLeg", "target": "rightLeg", "strength": 0.4 }]
+    }
+  }
+}
