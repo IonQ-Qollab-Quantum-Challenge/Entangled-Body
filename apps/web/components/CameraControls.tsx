@@ -12,6 +12,8 @@ export function CameraControls() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.enablePan = false;
+    controls.minPolarAngle = Math.PI * 0.08;
+    controls.maxPolarAngle = Math.PI * 0.52;
     controls.minDistance = 3.2;
     controls.maxDistance = 8.5;
     controls.target.set(0, 0, 0);
