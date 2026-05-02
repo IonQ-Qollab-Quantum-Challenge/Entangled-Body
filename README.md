@@ -24,6 +24,17 @@ http://localhost:3000
 
 Set `NEXT_PUBLIC_API_BASE_URL` if the API is not running on `http://localhost:8000`.
 
+## Run Frontend + Backend Together
+
+```bash
+npm run dev:all
+```
+
+- Frontend (3D astronaut model): `http://localhost:3000`
+- Backend API JSON: `http://localhost:8000`
+
+If you open port `8000`, you will see API JSON (health/docs), not the 3D scene.
+
 ## Run the Backend
 
 ```bash

@@ -8,7 +8,8 @@
     "dev": "next dev apps/web -p 3000",
     "web:dev": "next dev apps/web -p 3000",
     "api:dev": "bash ./scripts/dev.sh",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:all": "bash ./scripts/dev-full.sh"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.0",
