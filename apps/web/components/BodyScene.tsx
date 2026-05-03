@@ -160,7 +160,7 @@ export function BodyScene() {
 
   return (
     <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
-      <Canvas camera={{ position: [0, 0.2, 5.35], fov: 36 }} gl={{ antialias: true }}>
+      <Canvas camera={{ position: [0, 0.2, 5.35], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true }}>
         <color attach="background" args={["#07090d"]} />
         <ambientLight intensity={0.78} />
         <directionalLight position={[2.6, 4.2, 3.4]} intensity={1.85} />
@@ -206,4 +206,3 @@ export function BodyScene() {
     </main>
   );
 }
-

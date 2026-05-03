@@ -9,6 +9,8 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { BodyRegion } from "../lib/bodyRegions";
 import { regionFromSpatialPosition } from "../lib/bodyRegions";
 
+const GROUND_Y = -1.48;
+
 type OriginalGlbModelProps = {
   modelUrl: string;
   hoveredRegion: BodyRegion | null;
@@ -97,7 +99,7 @@ export function OriginalGlbModel({
         bindings,
         minY: box.min.y,
         maxY: box.max.y,
-        position: [-center.x * scale, -center.y * scale, -center.z * scale],
+        position: [-center.x * scale, GROUND_Y - box.min.y * scale, -center.z * scale],
       });
     });
 

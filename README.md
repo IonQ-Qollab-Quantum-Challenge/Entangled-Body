@@ -22,7 +22,7 @@ Frontend URL:
 http://localhost:3000
 ```
 
-Set `NEXT_PUBLIC_API_BASE_URL` if the API is not running on `http://localhost:8000`.
+The frontend proxies browser requests from `/api/*` to the backend. Set `API_BASE_URL` for the Next.js process if the API is not running on `http://127.0.0.1:8000`.
 
 ## Run the Backend
 
