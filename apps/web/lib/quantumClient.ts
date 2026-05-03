@@ -1,7 +1,7 @@
 import type { BodyRegion } from "./bodyRegions";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-const REQUEST_TIMEOUT_MS = 3500;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+const REQUEST_TIMEOUT_MS = 10000;
 
 export type QuantumClientState = {
   loading: boolean;
