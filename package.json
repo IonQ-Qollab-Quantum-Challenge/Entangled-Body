@@ -8,6 +8,7 @@
     "dev": "next dev apps/web -p 3000",
     "web:dev": "next dev apps/web -p 3000",
     "api:dev": "bash ./scripts/dev.sh",
+    "tiles:precompute": "node scripts/precomputeTileCloud.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
