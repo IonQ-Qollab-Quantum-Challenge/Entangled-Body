@@ -2,26 +2,32 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AdditiveBlending, BoxGeometry, Color, DynamicDrawUsage, InstancedMesh, Matrix4, MeshStandardMaterial, Object3D, Quaternion, Vector3, type Vector3Tuple } from "three";
+import { BoxGeometry, Color, DynamicDrawUsage, InstancedMesh, Matrix4, MeshStandardMaterial, Object3D, Quaternion, Vector3, type Vector3Tuple } from "three";
 
-import { type BodyQuantumState, type TileState } from "../lib/bodyRegions";
+import { BODY_REGIONS, type BodyQuantumState, type TileState } from "../lib/bodyRegions";
 import { loadPrecomputedTiles } from "../lib/loadPrecomputedTiles";
 
 type TileCloudBodyProps = {
   quantumState: BodyQuantumState;
   mode: "superposition" | "collapse";
+  collapsed: boolean;
   collapseProgress: number;
+  hoveredRegion: TileState["region"] | null;
   tileCount?: number;
   tileDataUrl?: string;
 };
 
-const TILE_SIZE = 0.034;
+const TILE_SIZE = 0.046;
 const SLICE_COUNT = 34;
 const SLICE_Y_SEGMENTS = 86;
+const SLICE_MIN_DENSITY = 1;
+const SLICE_DEPTH_PADDING = 0.052;
 const SUPERPOSITION_BODY_BIND = 0.9;
 const BODY_SCALE = 0.74;
+const POINT_HIDE_PROGRESS_START = 0.08;
+const POINT_HIDE_PROGRESS_END = 0.72;
 
-export function TileCloudBody({ quantumState, mode, collapseProgress, tileCount = 18000, tileDataUrl = "/data/astronaut-tile-cloud-18000.json" }: TileCloudBodyProps) {
+export function TileCloudBody({ quantumState, mode, collapsed, collapseProgress, hoveredRegion, tileCount = 18000, tileDataUrl = "/data/astronaut-tile-cloud-18000.json" }: TileCloudBodyProps) {
   const tileMeshRef = useRef<InstancedMesh>(null);
   const sliceMeshRef = useRef<InstancedMesh>(null);
   const tilesRef = useRef<TileState[]>([]);
@@ -32,29 +38,29 @@ export function TileCloudBody({ quantumState, mode, collapseProgress, tileCount 
   const tileMaterial = useMemo(
     () =>
       new MeshStandardMaterial({
-        color: "#fbfbf8",
-        emissive: "#c4c4bc",
-        emissiveIntensity: 0.08,
-        roughness: 0.2,
+        color: "#ffffff",
+        emissive: "#f3f3ec",
+        emissiveIntensity: 0.12,
+        roughness: 0.16,
         metalness: 0.88,
+        flatShading: true,
         vertexColors: true,
         transparent: true,
-        opacity: 0.9,
+        opacity: 1,
       }),
     [],
   );
   const sliceMaterial = useMemo(() => {
     const material = new MeshStandardMaterial({
       color: "#ffffff",
-      emissive: "#cecec6",
-      emissiveIntensity: 0.06,
-      roughness: 0.18,
+      emissive: "#f6f6ef",
+      emissiveIntensity: 0.1,
+      roughness: 0.15,
       metalness: 0.94,
       vertexColors: true,
       transparent: true,
-      opacity: 0.66,
-      depthWrite: false,
-      blending: AdditiveBlending,
+      opacity: 0.96,
+      depthWrite: true,
     });
     return material;
   }, []);
@@ -117,24 +123,33 @@ export function TileCloudBody({ quantumState, mode, collapseProgress, tileCount 
     if (!tileMesh || !sliceMesh || tiles.length === 0 || slices.length === 0) return;
 
     const elapsed = clock.getElapsedTime();
+    const activeRegion = collapsed ? null : hoveredRegion;
+    const globalPointVisibility = 1 - smoothstep(POINT_HIDE_PROGRESS_START, POINT_HIDE_PROGRESS_END, collapseProgress);
 
     for (let index = 0; index < slices.length; index += 1) {
       const slice = slices[index];
+      const regionActive = collapsed || slice.region === activeRegion;
       const wave = Math.sin(elapsed * 1.35 + slice.sliceIndex * 0.42 + slice.segmentIndex * 0.09) * 0.5 + 0.5;
-      const superposition = 1 - collapseProgress;
+      const regionProgress = collapsed ? collapseProgress : regionActive ? 1 : 0;
+      const superposition = 1 - regionProgress;
       const probabilityGap = superposition * (0.2 + (1 - slice.coherence) * 0.75);
       const shimmer = wave * probabilityGap * 0.028;
 
       reusableObject.position.fromArray(slice.center);
+      const sliceVisibility = regionActive ? 1 : 0;
       reusableObject.position.x += Math.sin(elapsed * 1.05 + slice.segmentIndex * 0.23) * shimmer + slice.displacement * 0.045;
       reusableObject.position.z += Math.cos(elapsed * 0.88 + slice.sliceIndex * 0.31) * shimmer;
       reusableObject.rotation.set(0, Math.sin(elapsed * 0.4 + slice.sliceIndex * 0.2) * 0.055 * superposition, 0);
-      reusableObject.scale.set(slice.width * (0.82 + slice.activation * 0.22), slice.height, slice.depth * (0.78 + wave * 0.22));
+      reusableObject.scale.set(
+        slice.width * (1.04 + slice.activation * 0.26) * sliceVisibility * regionProgress,
+        slice.height * sliceVisibility,
+        slice.depth * (1.16 + wave * 0.18) * sliceVisibility * regionProgress,
+      );
       reusableObject.updateMatrix();
       sliceMesh.setMatrixAt(index, reusableObject.matrix);
 
-      const shine = 0.86 + slice.activation * 0.08 + slice.coherence * 0.05;
-      reusableColor.setRGB(shine, shine, shine * 0.96);
+      const shine = Math.min(1, 0.95 + slice.activation * 0.04 + slice.coherence * 0.03);
+      reusableColor.setRGB(shine, shine, shine * 0.985);
       sliceMesh.setColorAt(index, reusableColor);
     }
 
@@ -147,29 +162,34 @@ export function TileCloudBody({ quantumState, mode, collapseProgress, tileCount 
 
     for (let index = 0; index < tiles.length; index += 1) {
       const tile = tiles[index];
-      tile.collapseProgress = collapseProgress;
+      const regionActive = collapsed || tile.region === activeRegion;
+      const regionProgress = collapsed ? collapseProgress : regionActive ? 1 : 0;
+      tile.collapseProgress = regionProgress;
       reusableTarget.fromArray(tile.targetPosition);
       reusableScattered.fromArray(tile.scatteredPosition);
       reusableCurrent.fromArray(tile.currentPosition);
+      const pointVisibility = regionActive ? (collapsed ? globalPointVisibility : 0) : 1;
 
       const pulse = Math.sin(elapsed * 2.1 + index * 0.013) * 0.5 + 0.5;
       const sliceGap = Math.sin(index * 12.9898) * 0.05;
-      const noise = mode === "collapse" ? (1 - collapseProgress) * 0.03 : 0.026 + 0.055 * (1 - tile.coherence);
-      const cluster = Math.min(1, SUPERPOSITION_BODY_BIND + tile.activation * 0.08 + collapseProgress);
-      const destination = mode === "collapse" ? reusableTarget : reusableScattered.lerp(reusableTarget, cluster);
+      const noise = regionActive ? (1 - regionProgress) * 0.03 : 0.026 + 0.055 * (1 - tile.coherence);
+      const cluster = Math.min(1, SUPERPOSITION_BODY_BIND + tile.activation * 0.08 + regionProgress);
+      reusableDestination.copy(regionActive ? reusableTarget : reusableScattered.lerp(reusableTarget, cluster));
+      const destination = reusableDestination;
       destination.x += Math.sin(elapsed * 1.7 + index) * noise + tile.displacement * 0.08;
       destination.y += Math.cos(elapsed * 1.3 + index * 0.7) * noise;
-      destination.z += Math.sin(elapsed * 1.1 + index * 0.31) * noise + sliceGap * (1 - collapseProgress);
+      destination.z += Math.sin(elapsed * 1.1 + index * 0.31) * noise + sliceGap * (1 - regionProgress);
 
-      reusableCurrent.lerp(destination, mode === "collapse" ? 0.08 + collapseProgress * 0.2 : 0.055);
+      reusableCurrent.lerp(destination, regionActive ? 0.08 + regionProgress * 0.2 : 0.055);
       tile.currentPosition = reusableCurrent.toArray();
 
-      const scale = 0.48 + tile.activation * 0.72 + pulse * tile.coherence * 0.18;
+      const activeTileDensity = regionActive ? 0.58 + regionProgress * 0.34 : 0;
+      const scale = (0.48 + tile.activation * 0.72 + pulse * tile.coherence * 0.18 + activeTileDensity) * pointVisibility;
       reusableObject.position.copy(reusableCurrent);
       reusableObject.scale.setScalar(scale);
-      if (mode === "collapse") {
+      if (regionActive) {
         reusableQuaternion.identity();
-        reusableObject.quaternion.slerp(reusableQuaternion, collapseProgress);
+        reusableObject.quaternion.slerp(reusableQuaternion, regionProgress);
       } else {
         reusableObject.rotation.set(
           Math.sin(elapsed * 0.7 + index * 0.11) * 0.18,
@@ -180,8 +200,8 @@ export function TileCloudBody({ quantumState, mode, collapseProgress, tileCount 
       reusableObject.updateMatrix();
       tileMesh.setMatrixAt(index, reusableObject.matrix);
 
-      const silver = 0.84 + tile.activation * 0.08 + tile.coherence * 0.05;
-      reusableColor.setRGB(silver, silver, silver * 0.96);
+      const silver = Math.min(1, 0.94 + tile.activation * 0.04 + tile.coherence * 0.03 + regionProgress * 0.06);
+      reusableColor.setRGB(silver, silver, silver * (0.985 + regionProgress * 0.015));
       tileMesh.setColorAt(index, reusableColor);
     }
 
@@ -200,7 +220,7 @@ export function TileCloudBody({ quantumState, mode, collapseProgress, tileCount 
 
   return (
     <group scale={BODY_SCALE}>
-      <instancedMesh ref={sliceMeshRef} args={[sliceGeometry, sliceMaterial, SLICE_COUNT * SLICE_Y_SEGMENTS]} frustumCulled={false} />
+      <instancedMesh ref={sliceMeshRef} args={[sliceGeometry, sliceMaterial, SLICE_COUNT * SLICE_Y_SEGMENTS * BODY_REGIONS.length]} frustumCulled={false} />
       <instancedMesh ref={tileMeshRef} args={[tileGeometry, tileMaterial, Math.max(tileCount, tilesRef.current.length || tileCount)]} frustumCulled={false} />
     </group>
   );
@@ -224,8 +244,14 @@ const reusableColor = new Color();
 const reusableTarget = new Vector3();
 const reusableScattered = new Vector3();
 const reusableCurrent = new Vector3();
+const reusableDestination = new Vector3();
 const reusableMatrix = new Matrix4();
 const reusableQuaternion = new Quaternion();
+
+function smoothstep(edge0: number, edge1: number, value: number): number {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
 
 function buildSlices(tiles: TileState[]): SliceState[] {
   if (tiles.length === 0) return [];
@@ -256,6 +282,8 @@ function buildSlices(tiles: TileState[]): SliceState[] {
         x: 0,
         y: 0,
         z: 0,
+        minZ: Number.POSITIVE_INFINITY,
+        maxZ: Number.NEGATIVE_INFINITY,
         count: 0,
         sliceIndex,
         segmentIndex,
@@ -265,19 +293,25 @@ function buildSlices(tiles: TileState[]): SliceState[] {
     bucket.x += min.x + sliceWidth * (sliceIndex + 0.5);
     bucket.y += y;
     bucket.z += z;
+    bucket.minZ = Math.min(bucket.minZ, z);
+    bucket.maxZ = Math.max(bucket.maxZ, z);
     bucket.count += 1;
     buckets.set(key, bucket);
   }
 
   return [...buckets.values()]
-    .filter((bucket) => bucket.count >= 2)
+    .filter((bucket) => bucket.count >= SLICE_MIN_DENSITY)
     .map((bucket) => {
-      const density = Math.min(1, bucket.count / 9);
+      const neighborhood = collectNeighborhood(bucket, buckets);
+      const density = Math.min(1, neighborhood.count / 18);
+      const centerZ = neighborhood.z / neighborhood.count;
+      const depth = Math.max(bucket.maxZ - bucket.minZ, neighborhood.maxZ - neighborhood.minZ);
+
       return {
-        center: [bucket.x / bucket.count, bucket.y / bucket.count, bucket.z / bucket.count],
-        width: sliceWidth * (0.44 + density * 0.42),
-        height: segmentHeight * (0.7 + density * 1.8),
-        depth: 0.018 + density * 0.018,
+        center: [bucket.x / bucket.count, bucket.y / bucket.count, centerZ],
+        width: sliceWidth * (0.78 + density * 0.48),
+        height: segmentHeight * (1.25 + density * 1.75),
+        depth: depth + SLICE_DEPTH_PADDING + density * 0.048,
         sliceIndex: bucket.sliceIndex,
         segmentIndex: bucket.segmentIndex,
         region: bucket.region,
@@ -292,11 +326,41 @@ type SliceBucket = {
   x: number;
   y: number;
   z: number;
+  minZ: number;
+  maxZ: number;
   count: number;
   sliceIndex: number;
   segmentIndex: number;
   region: TileState["region"];
 };
+
+function collectNeighborhood(bucket: SliceBucket, buckets: Map<string, SliceBucket>) {
+  const result = {
+    z: 0,
+    minZ: bucket.minZ,
+    maxZ: bucket.maxZ,
+    count: 0,
+  };
+
+  for (let sliceOffset = -1; sliceOffset <= 1; sliceOffset += 1) {
+    for (let segmentOffset = -1; segmentOffset <= 1; segmentOffset += 1) {
+      const neighbor = buckets.get(`${bucket.sliceIndex + sliceOffset}:${bucket.segmentIndex + segmentOffset}:${bucket.region}`);
+      if (!neighbor) continue;
+      const weight = sliceOffset === 0 && segmentOffset === 0 ? 1 : 0.46;
+      result.z += (neighbor.z / neighbor.count) * neighbor.count * weight;
+      result.count += neighbor.count * weight;
+      result.minZ = Math.min(result.minZ, neighbor.minZ);
+      result.maxZ = Math.max(result.maxZ, neighbor.maxZ);
+    }
+  }
+
+  if (result.count === 0) {
+    result.z = bucket.z;
+    result.count = bucket.count;
+  }
+
+  return result;
+}
 
 function clampIndex(index: number, count: number) {
   return Math.max(0, Math.min(count - 1, index));

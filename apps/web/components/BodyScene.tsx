@@ -1,12 +1,12 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { Vector3Tuple } from "three";
 
 import { emptyRegionStates, type BodyQuantumState, type BodyRegion } from "../lib/bodyRegions";
 import { mapQuantumToBody } from "../lib/mapQuantumToBody";
-import { getPrecomputed, measure } from "../lib/quantumClient";
+import { getPrecomputed } from "../lib/quantumClient";
 import { CollapseController } from "./CollapseController";
 import { CameraControls } from "./CameraControls";
 import { InteractionLayer } from "./InteractionLayer";
@@ -16,69 +16,26 @@ import { TileCloudBody } from "./TileCloudBody";
 export function BodyScene() {
   const [mode, setMode] = useState<"superposition" | "collapse">("superposition");
   const [collapseProgress, setCollapseProgress] = useState(0);
+  const [collapsed, setCollapsed] = useState(false);
   const [quantumState, setQuantumState] = useState<BodyQuantumState>({
     regionStates: emptyRegionStates(),
     entanglementLinks: [],
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hoveredRegion, setHoveredRegion] = useState<BodyRegion | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<Vector3Tuple | null>(null);
   const [stableProgress, setStableProgress] = useState(0);
   const precomputedCache = useRef(new Map<BodyRegion, BodyQuantumState>());
   const lastHoverRegion = useRef<BodyRegion | null>(null);
-  const collapseFrame = useRef<number | null>(null);
-  const stableReturnTimeout = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
-      if (stableReturnTimeout.current !== null) window.clearTimeout(stableReturnTimeout.current);
-    };
-  }, []);
-
-  const startMeasurementPulse = useCallback(() => {
-    if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
-    if (stableReturnTimeout.current !== null) {
-      window.clearTimeout(stableReturnTimeout.current);
-      stableReturnTimeout.current = null;
-    }
-    setMode("collapse");
-    setCollapseProgress(0);
-    setStableProgress(0);
-
-    const started = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - started) / 1200);
-      setCollapseProgress(progress);
-      setStableProgress(progress);
-      if (progress < 1) {
-        collapseFrame.current = requestAnimationFrame(tick);
-      } else {
-        collapseFrame.current = null;
-        stableReturnTimeout.current = window.setTimeout(() => {
-          const returnStarted = performance.now();
-          const returnTick = (returnNow: number) => {
-            const returnProgress = Math.max(0, 1 - (returnNow - returnStarted) / 1800);
-            setCollapseProgress(returnProgress);
-            setStableProgress(returnProgress);
-            if (returnProgress > 0) {
-              collapseFrame.current = requestAnimationFrame(returnTick);
-            } else {
-              collapseFrame.current = null;
-              stableReturnTimeout.current = null;
-              setMode("superposition");
-            }
-          };
-
-          collapseFrame.current = requestAnimationFrame(returnTick);
-        }, 900);
-      }
-    };
-
-    collapseFrame.current = requestAnimationFrame(tick);
-  }, []);
 
   const applyWeakMeasurement = useCallback(async (region: BodyRegion | null, point?: Vector3Tuple) => {
+    if (collapsed) {
+      setHoveredRegion(null);
+      setHoveredPoint(null);
+      return;
+    }
+
+    setHoveredRegion(region);
     setHoveredPoint(point ?? null);
     if (!region) {
       lastHoverRegion.current = null;
@@ -102,48 +59,31 @@ export function BodyScene() {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Precomputed quantum request failed.");
     }
+  }, [collapsed]);
+
+  const toggleBodyRepresentation = useCallback(() => {
+    setError(null);
+    setCollapsed((currentCollapsed) => {
+      const nextCollapsed = !currentCollapsed;
+      const nextProgress = nextCollapsed ? 1 : 0;
+      setHoveredRegion(null);
+      setHoveredPoint(null);
+      setCollapseProgress(nextProgress);
+      setStableProgress(nextProgress);
+      setMode(nextCollapsed ? "collapse" : "superposition");
+      return nextCollapsed;
+    });
   }, []);
 
-  const applyStrongMeasurement = useCallback(async (region: BodyRegion, point?: Vector3Tuple) => {
+  const applyStrongMeasurement = useCallback((region: BodyRegion, point?: Vector3Tuple) => {
+    void region;
     setHoveredPoint(point ?? hoveredPoint);
-    if (loading) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      startMeasurementPulse();
-      const mapped = mapQuantumToBody(await measure(region, 1, 1024));
-      setQuantumState(mapped);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Simulator measurement failed.");
-    } finally {
-      setLoading(false);
-    }
-  }, [hoveredPoint, loading, startMeasurementPulse]);
+    toggleBodyRepresentation();
+  }, [hoveredPoint, toggleBodyRepresentation]);
 
   const triggerGlobalCollapse = useCallback(() => {
-    if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
-    if (stableReturnTimeout.current !== null) {
-      window.clearTimeout(stableReturnTimeout.current);
-      stableReturnTimeout.current = null;
-    }
-    setMode("collapse");
-    setStableProgress(0);
-    setCollapseProgress(0);
-
-    const started = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - started) / 1600);
-      setCollapseProgress(progress);
-      if (progress < 1) {
-        collapseFrame.current = requestAnimationFrame(tick);
-      } else {
-        collapseFrame.current = null;
-      }
-    };
-
-    collapseFrame.current = requestAnimationFrame(tick);
-  }, []);
+    toggleBodyRepresentation();
+  }, [toggleBodyRepresentation]);
 
   return (
     <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -155,7 +95,7 @@ export function BodyScene() {
         <pointLight position={[-2.4, 1.2, 2.2]} intensity={0.72} color="#85d8ff" />
         <SpaceEnvironment />
         <group rotation={[0, -0.08, 0]}>
-          <TileCloudBody quantumState={quantumState} mode={mode} collapseProgress={collapseProgress} tileCount={18000} />
+          <TileCloudBody quantumState={quantumState} mode={mode} collapsed={collapsed} collapseProgress={collapseProgress} hoveredRegion={hoveredRegion} tileCount={18000} />
           <InteractionLayer onHoverRegion={applyWeakMeasurement} onMeasureRegion={applyStrongMeasurement} onGlobalCollapse={triggerGlobalCollapse} />
         </group>
         <CameraControls />
