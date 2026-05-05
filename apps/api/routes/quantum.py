@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from quantum.mapper import REGIONS, build_entanglement_links, counts_to_region_states
+from quantum.mapper import REGIONS, build_entanglement_links, counts_to_node_states, counts_to_region_states
 from quantum.run_simulator import run_aer_measurement
 
 router = APIRouter(prefix="/quantum", tags=["quantum"])
@@ -18,6 +18,8 @@ class MeasurementRequest(BaseModel):
     region: str = Field(default="torso")
     intensity: float = Field(default=1.0, ge=0.0, le=1.0)
     shots: int = Field(default=1024, ge=1, le=8192)
+    interaction: Literal["hover", "click", "hold"] = Field(default="hover")
+    seed: int | None = Field(default=None)
 
 
 @router.get("/health")
@@ -55,14 +57,12 @@ def get_precomputed_sample() -> dict:
 
 @router.post("/measure")
 def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
-    try:
-        measurement = run_aer_measurement(
-            region=payload.region,
-            intensity=payload.intensity,
-            shots=payload.shots,
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Aer simulator failed: {exc}") from exc
+    measurement = run_aer_measurement(
+        region=payload.region,
+        intensity=payload.intensity,
+        shots=payload.shots,
+        interaction=payload.interaction,
+    )
 
     counts = measurement["counts"]
     if not isinstance(counts, dict):
@@ -73,12 +73,20 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
         region=payload.region,
         intensity=payload.intensity,
         shots=int(measurement["shots"]),
+        seed=payload.seed,
     )
+    entanglement_links = build_entanglement_links(region_states)
     return {
         **measurement,
         "region": payload.region,
         "regionStates": region_states,
-        "entanglementLinks": build_entanglement_links(region_states),
+        "entanglementLinks": entanglement_links,
+        "nodeStates": counts_to_node_states(
+            counts=counts,
+            region_states=region_states,
+            interaction=payload.interaction,
+            shots=int(measurement["shots"]),
+        ),
     }
 
 

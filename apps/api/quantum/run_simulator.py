@@ -1,46 +1,67 @@
 from __future__ import annotations
 
-from qiskit import QuantumCircuit, transpile
+from qiskit import transpile
 from qiskit_aer import AerSimulator
 
-
-def build_measurement_circuit(region: str, intensity: float = 1.0) -> QuantumCircuit:
-    region_indexes = {
-        "head": 0,
-        "torso": 1,
-        "leftArm": 2,
-        "rightArm": 3,
-        "leftLeg": 4,
-        "rightLeg": 5,
-    }
-    selected = region_indexes.get(region, 1)
-    normalized_intensity = max(0.0, min(float(intensity), 1.0))
-
-    circuit = QuantumCircuit(6, 6)
-    circuit.h(range(6))
-    circuit.cx(0, 1)
-    circuit.cx(1, 2)
-    circuit.cx(1, 3)
-    circuit.cx(2, 4)
-    circuit.cx(3, 5)
-    circuit.ry(normalized_intensity * 1.5708, selected)
-    circuit.cx(selected, (selected + 1) % 6)
-    circuit.measure(range(6), range(6))
-    return circuit
+from quantum.circuits import QUBIT_COUNT, build_measurement_circuit
+from quantum.mapper import get_region_entries
 
 
-def run_aer_measurement(region: str, intensity: float = 1.0, shots: int = 1024) -> dict[str, object]:
+def run_aer_measurement(
+    region: str,
+    intensity: float = 1.0,
+    shots: int = 1024,
+    interaction: str = "hover",
+) -> dict[str, object]:
     safe_shots = max(1, min(int(shots), 8192))
-    circuit = build_measurement_circuit(region=region, intensity=intensity)
-    simulator = AerSimulator()
-    compiled = transpile(circuit, simulator)
-    result = simulator.run(compiled, shots=safe_shots).result()
-    counts = dict(result.get_counts(compiled))
-    dominant = max(counts.items(), key=lambda item: item[1])[0] if counts else ""
+    try:
+        circuit = build_measurement_circuit(
+            region=region,
+            intensity=intensity,
+            interaction=interaction,
+        )
+        simulator = AerSimulator()
+        compiled = transpile(circuit, simulator)
+        result = simulator.run(compiled, shots=safe_shots).result()
+        counts = dict(result.get_counts(compiled))
+        source = "aer"
+        error = None
+    except Exception as exc:
+        counts = _fallback_counts(region=region, shots=safe_shots)
+        source = "fallback"
+        error = str(exc)
 
-    return {
+    dominant = max(counts.items(), key=lambda item: item[1])[0] if counts else ""
+    probabilities = {
+        bitstring: round(count / safe_shots, 6)
+        for bitstring, count in sorted(counts.items())
+    }
+
+    payload: dict[str, object] = {
         "counts": counts,
+        "probabilities": probabilities,
         "dominantBitstring": dominant,
         "shots": safe_shots,
-        "qubits": 6,
+        "qubits": QUBIT_COUNT,
+        "source": source,
+    }
+    if error is not None:
+        payload["fallbackReason"] = error
+    return payload
+
+
+def _fallback_counts(region: str, shots: int) -> dict[str, int]:
+    region_indexes = {
+        entry["id"]: int(entry["qubitIndex"])
+        for entry in get_region_entries()
+    }
+    selected = region_indexes.get(region, region_indexes["torso"])
+    active = ["0"] * QUBIT_COUNT
+    active[QUBIT_COUNT - selected - 1] = "1"
+    dominant = "".join(active)
+    secondary = "0" * QUBIT_COUNT
+    dominant_count = max(1, int(shots * 0.68))
+    return {
+        dominant: dominant_count,
+        secondary: shots - dominant_count,
     }

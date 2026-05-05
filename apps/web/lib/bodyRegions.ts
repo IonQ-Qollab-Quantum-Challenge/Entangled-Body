@@ -16,6 +16,16 @@ export type EntanglementLink = {
   strength: number;
 };
 
+export type QuantumNodeState = {
+  region: BodyRegion;
+  qubitIndex: number;
+  measuredBit: "0" | "1";
+  probability: number;
+  activation: number;
+  coherence: number;
+  collapsed: boolean;
+};
+
 export type TileState = {
   currentPosition: Vector3Tuple;
   targetPosition: Vector3Tuple;
@@ -30,6 +40,7 @@ export type TileState = {
 export type BodyQuantumState = {
   regionStates: Record<BodyRegion, RegionState>;
   entanglementLinks: EntanglementLink[];
+  nodeStates: QuantumNodeState[];
 };
 
 export function emptyRegionStates(): Record<BodyRegion, RegionState> {

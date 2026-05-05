@@ -1,12 +1,32 @@
-import type { BodyRegion } from "./bodyRegions";
+import type { BodyRegion, QuantumNodeState, RegionState } from "./bodyRegions";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 const REQUEST_TIMEOUT_MS = 10000;
+
+export type QuantumInteraction = "hover" | "click" | "hold";
 
 export type QuantumClientState = {
   loading: boolean;
   error: string | null;
 };
+
+export type QuantumMeasurementPayload = {
+  counts?: Record<string, number>;
+  probabilities?: Record<string, number>;
+  dominantBitstring?: string;
+  shots?: number;
+  qubits?: number;
+  source?: string;
+  fallbackReason?: string;
+  region?: BodyRegion;
+  regionStates?: Partial<Record<BodyRegion, RegionState>>;
+  entanglementLinks?: Array<{ source: BodyRegion; target: BodyRegion; strength: number }>;
+  nodeStates?: QuantumNodeState[];
+};
+
+export async function getQuantumHealth(): Promise<unknown> {
+  return requestJson(`${API_BASE}/quantum/health`, { method: "GET" });
+}
 
 export async function getPrecomputed(region: BodyRegion): Promise<unknown> {
   const payload = await requestJson(`${API_BASE}/quantum/precomputed`, { method: "GET" });
@@ -18,11 +38,16 @@ export async function getPrecomputed(region: BodyRegion): Promise<unknown> {
   return payload;
 }
 
-export async function measure(region: BodyRegion, intensity = 1, shots = 1024): Promise<unknown> {
+export async function measure(
+  region: BodyRegion,
+  intensity = 1,
+  shots = 1024,
+  options: { interaction?: QuantumInteraction; seed?: number } = {},
+): Promise<unknown> {
   return requestJson(`${API_BASE}/quantum/measure`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ region, intensity, shots }),
+    body: JSON.stringify({ region, intensity, shots, ...options }),
   });
 }
 

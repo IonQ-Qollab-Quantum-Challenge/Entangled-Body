@@ -1,4 +1,13 @@
-import { BODY_REGIONS, type BodyQuantumState, type BodyRegion, type EntanglementLink, type RegionState, emptyRegionStates, isBodyRegion } from "./bodyRegions";
+import {
+  BODY_REGIONS,
+  type BodyQuantumState,
+  type BodyRegion,
+  type EntanglementLink,
+  type QuantumNodeState,
+  type RegionState,
+  emptyRegionStates,
+  isBodyRegion,
+} from "./bodyRegions";
 
 type RawRegionState = Partial<Record<BodyRegion, Partial<RegionState>>>;
 
@@ -19,6 +28,7 @@ export function mapQuantumToBody(payload: unknown): BodyQuantumState {
   return {
     regionStates: base,
     entanglementLinks: extractLinks(payload),
+    nodeStates: extractNodeStates(payload),
   };
 }
 
@@ -49,6 +59,30 @@ function extractLinks(payload: unknown): EntanglementLink[] {
     if (typeof link.source !== "string" || typeof link.target !== "string") return [];
     if (!isBodyRegion(link.source) || !isBodyRegion(link.target)) return [];
     return [{ source: link.source, target: link.target, strength: clamp01(Number(link.strength ?? 0)) }];
+  });
+}
+
+function extractNodeStates(payload: unknown): QuantumNodeState[] {
+  if (!payload || typeof payload !== "object") return [];
+  const nodes = (payload as Record<string, unknown>).nodeStates;
+  if (!Array.isArray(nodes)) return [];
+
+  return nodes.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const node = item as Record<string, unknown>;
+    if (typeof node.region !== "string" || !isBodyRegion(node.region)) return [];
+    const measuredBit = node.measuredBit === "1" ? "1" : "0";
+    return [
+      {
+        region: node.region,
+        qubitIndex: Number(node.qubitIndex ?? 0),
+        measuredBit,
+        probability: clamp01(Number(node.probability ?? 0)),
+        activation: clamp01(Number(node.activation ?? 0)),
+        coherence: clamp01(Number(node.coherence ?? 0)),
+        collapsed: Boolean(node.collapsed),
+      },
+    ];
   });
 }
 

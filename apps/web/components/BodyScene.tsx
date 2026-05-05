@@ -6,11 +6,11 @@ import type { Vector3Tuple } from "three";
 
 import { emptyRegionStates, type BodyQuantumState, type BodyRegion } from "../lib/bodyRegions";
 import { mapQuantumToBody } from "../lib/mapQuantumToBody";
-import { getPrecomputed, measure } from "../lib/quantumClient";
-import { CollapseController } from "./CollapseController";
+import { getPrecomputed, measure, type QuantumMeasurementPayload } from "../lib/quantumClient";
 import { CameraControls } from "./CameraControls";
 import { InteractionLayer } from "./InteractionLayer";
 import { OriginalGlbModel } from "./OriginalGlbModel";
+import { QuantumNodeDashboard } from "./QuantumNodeDashboard";
 import { SpaceEnvironment } from "./SpaceEnvironment";
 import { TileCloudBody } from "./TileCloudBody";
 
@@ -22,7 +22,9 @@ export function BodyScene() {
   const [quantumState, setQuantumState] = useState<BodyQuantumState>({
     regionStates: emptyRegionStates(),
     entanglementLinks: [],
+    nodeStates: [],
   });
+  const [latestMeasurement, setLatestMeasurement] = useState<QuantumMeasurementPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [renderMode, setRenderMode] = useState<"tileCloud" | "originalModel">("originalModel");
@@ -84,6 +86,33 @@ export function BodyScene() {
     collapseFrame.current = requestAnimationFrame(tick);
   }, [hoveredPoint]);
 
+  const startCollapseAnimation = useCallback(() => {
+    if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
+    if (stableReturnTimeout.current !== null) {
+      window.clearTimeout(stableReturnTimeout.current);
+      stableReturnTimeout.current = null;
+    }
+    setMode("collapse");
+    setRenderMode("tileCloud");
+    setModelStable(false);
+    setStablePoint(null);
+    setStableProgress(0);
+    setCollapseProgress(0);
+
+    const started = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - started) / 1600);
+      setCollapseProgress(progress);
+      if (progress < 1) {
+        collapseFrame.current = requestAnimationFrame(tick);
+      } else {
+        collapseFrame.current = null;
+      }
+    };
+
+    collapseFrame.current = requestAnimationFrame(tick);
+  }, []);
+
   const applyWeakMeasurement = useCallback(async (region: BodyRegion | null, point?: Vector3Tuple) => {
     setHoveredRegion(region);
     setHoveredPoint(point ?? null);
@@ -118,11 +147,15 @@ export function BodyScene() {
     try {
       setLoading(true);
       setError(null);
+      setHoveredRegion(region);
+      setHoveredPoint(point ?? null);
       setMode("superposition");
       setCollapseProgress(0);
       setRenderMode("originalModel");
       startStableReveal(point);
-      const mapped = mapQuantumToBody(await measure(region, 1, 1024));
+      const payload = await measure(region, 1, 1024, { interaction: "click" });
+      const mapped = mapQuantumToBody(payload);
+      setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Simulator measurement failed.");
@@ -131,32 +164,23 @@ export function BodyScene() {
     }
   }, [loading, modelStable, startStableReveal]);
 
-  const triggerGlobalCollapse = useCallback(() => {
-    if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
-    if (stableReturnTimeout.current !== null) {
-      window.clearTimeout(stableReturnTimeout.current);
-      stableReturnTimeout.current = null;
+  const triggerGlobalCollapse = useCallback(async () => {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      startCollapseAnimation();
+      const payload = await measure(hoveredRegion ?? "torso", 1, 1024, { interaction: "hold" });
+      const mapped = mapQuantumToBody(payload);
+      setLatestMeasurement(payload as QuantumMeasurementPayload);
+      setQuantumState(mapped);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Global collapse failed.");
+    } finally {
+      setLoading(false);
     }
-    setMode("collapse");
-    setRenderMode("tileCloud");
-    setModelStable(false);
-    setStablePoint(null);
-    setStableProgress(0);
-    setCollapseProgress(0);
-
-    const started = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - started) / 1600);
-      setCollapseProgress(progress);
-      if (progress < 1) {
-        collapseFrame.current = requestAnimationFrame(tick);
-      } else {
-        collapseFrame.current = null;
-      }
-    };
-
-    collapseFrame.current = requestAnimationFrame(tick);
-  }, []);
+  }, [hoveredRegion, loading, startCollapseAnimation]);
 
   return (
     <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -185,7 +209,7 @@ export function BodyScene() {
               stablePoint={stablePoint}
               stableProgress={stableProgress}
               opacity={0.22}
-              waveStrength={1.55}
+              waveStrength={0}
             />
           )}
         </group>
@@ -195,13 +219,13 @@ export function BodyScene() {
         <div style={{ fontSize: 84, fontWeight: 900, letterSpacing: 0 }}>Entangled Body</div>
         <div style={{ fontSize: 36, color: "rgba(245,247,251,0.68)" }}>original GLB | transparent wave | hold collapse</div>
       </div>
-      <CollapseController
+      <QuantumNodeDashboard
+        latestMeasurement={latestMeasurement}
         mode={mode}
         collapseProgress={collapseProgress}
         stableProgress={stableProgress}
         modelStable={modelStable}
         loading={loading}
-        error={error}
       />
     </main>
   );
