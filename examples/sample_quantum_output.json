@@ -1,0 +1,33 @@
+{
+  "counts": {
+    "000000": 164,
+    "000010": 348
+  },
+  "dominantBitstring": "000010",
+  "entanglementLinks": [
+    {
+      "source": "head",
+      "strength": 0.321,
+      "target": "torso"
+    }
+  ],
+  "nodeStates": [
+    {
+      "activation": 0.7,
+      "coherence": 0.5,
+      "collapsed": true,
+      "measuredBit": "0",
+      "probability": 1,
+      "qubitIndex": 0,
+      "region": "head"
+    }
+  ],
+  "probabilities": {
+    "000000": 0.320312,
+    "000010": 0.679688
+  },
+  "qubits": 6,
+  "region": "torso",
+  "shots": 512,
+  "source": "example"
+}

@@ -27,7 +27,7 @@ type OriginalGlbModelProps = {
   hoveredRegion: BodyRegion | null;
   hoveredPoint: Vector3Tuple | null;
   onHoverRegion: (region: BodyRegion | null, point?: Vector3Tuple) => void;
-  onMeasureRegion: (region: BodyRegion, point?: Vector3Tuple) => void;
+  onMeasureRegion: (region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => void;
   onGlobalCollapse: () => void;
   stable: boolean;
   stablePoint: Vector3Tuple | null;
@@ -69,20 +69,20 @@ type MutableNumberArray = {
 };
 
 type FixedRegionLabel =
-  | "head"
-  | "chest"
-  | "abdomen"
-  | "back"
-  | "leftShoulder"
-  | "rightShoulder"
-  | "leftArm"
-  | "rightArm"
-  | "leftHand"
-  | "rightHand"
-  | "leftLeg"
-  | "rightLeg"
-  | "leftFoot"
-  | "rightFoot";
+  | "node0"
+  | "node1"
+  | "node2"
+  | "node3"
+  | "node4"
+  | "node5"
+  | "node6"
+  | "node7"
+  | "node8"
+  | "node9"
+  | "node10"
+  | "node11"
+  | "node12"
+  | "node13";
 
 type FixedRegionPoint = {
   label: FixedRegionLabel;
@@ -99,20 +99,20 @@ type FixedPointWhiteCandidate = {
 };
 
 const FIXED_REGION_CONNECTIONS: Record<FixedRegionLabel, FixedRegionLabel[]> = {
-  head: ["chest", "back"],
-  chest: ["head", "abdomen", "back", "leftShoulder", "rightShoulder"],
-  abdomen: ["chest", "back", "leftLeg", "rightLeg"],
-  back: ["head", "chest", "abdomen", "leftShoulder", "rightShoulder"],
-  leftShoulder: ["chest", "back", "leftArm"],
-  rightShoulder: ["chest", "back", "rightArm"],
-  leftArm: ["leftShoulder", "leftHand"],
-  rightArm: ["rightShoulder", "rightHand"],
-  leftHand: ["leftArm"],
-  rightHand: ["rightArm"],
-  leftLeg: ["abdomen", "leftFoot"],
-  rightLeg: ["abdomen", "rightFoot"],
-  leftFoot: ["leftLeg"],
-  rightFoot: ["rightLeg"],
+  node0: ["node1", "node3"],
+  node1: ["node0", "node2", "node3", "node4", "node5"],
+  node2: ["node1", "node3", "node10", "node11"],
+  node3: ["node0", "node1", "node2", "node4", "node5"],
+  node4: ["node1", "node3", "node6"],
+  node5: ["node1", "node3", "node7"],
+  node6: ["node4", "node8"],
+  node7: ["node5", "node9"],
+  node8: ["node6"],
+  node9: ["node7"],
+  node10: ["node2", "node12"],
+  node11: ["node2", "node13"],
+  node12: ["node10"],
+  node13: ["node11"],
 };
 
 export function OriginalGlbModel({
@@ -253,13 +253,14 @@ export function OriginalGlbModel({
     holdTimer.current = null;
   }
 
-  function regionFromEvent(event: ThreeEvent<PointerEvent>): { region: BodyRegion; point: Vector3Tuple } | null {
+  function regionFromEvent(event: ThreeEvent<PointerEvent>): { region: BodyRegion; point: Vector3Tuple; nodeIndex: number } | null {
     if (!model) return null;
     const localPoint = event.point.clone();
     model.scene.worldToLocal(localPoint);
     return {
       region: regionFromSpatialPosition(localPoint.x, localPoint.y, model.minY, model.maxY),
       point: event.point.toArray() as Vector3Tuple,
+      nodeIndex: findNearestFixedRegionPointIndex(getFixedRegionPoints(model), model.scene, event),
     };
   }
 
@@ -297,7 +298,7 @@ export function OriginalGlbModel({
           const hit = regionFromEvent(event);
           if (holdTimer.current !== null && hit) {
             clearHoldTimer();
-            onMeasureRegion(hit.region, hit.point);
+            onMeasureRegion(hit.region, hit.point, hit.nodeIndex);
           }
         }}
         onPointerLeave={() => {
@@ -366,20 +367,20 @@ function getFixedRegionPoints(model: LoadedModel): FixedRegionPoint[] {
   const x = (ratio: number) => centerX + width * ratio;
 
   return [
-    { label: "head", position: [centerX, y(0.86), frontZ] },
-    { label: "chest", position: [centerX, y(0.66), frontZ] },
-    { label: "abdomen", position: [centerX, y(0.52), frontZ] },
-    { label: "back", position: [centerX, y(0.61), backZ] },
-    { label: "leftShoulder", position: [x(-0.23), y(0.7), centerZ] },
-    { label: "rightShoulder", position: [x(0.23), y(0.7), centerZ] },
-    { label: "leftArm", position: [x(-0.36), y(0.57), centerZ] },
-    { label: "rightArm", position: [x(0.36), y(0.57), centerZ] },
-    { label: "leftHand", position: [x(-0.43), y(0.39, 0.035), frontZ] },
-    { label: "rightHand", position: [x(0.43), y(0.39, 0.035), frontZ] },
-    { label: "leftLeg", position: [x(-0.13), y(0.28), centerZ] },
-    { label: "rightLeg", position: [x(0.13), y(0.28), centerZ] },
-    { label: "leftFoot", position: [x(-0.14), y(0.04, -0.035), frontZ] },
-    { label: "rightFoot", position: [x(0.14), y(0.04, -0.035), frontZ] },
+    { label: "node0", position: [centerX, y(0.86), frontZ] },
+    { label: "node1", position: [centerX, y(0.66), frontZ] },
+    { label: "node2", position: [centerX, y(0.52), frontZ] },
+    { label: "node3", position: [centerX, y(0.61), backZ] },
+    { label: "node4", position: [x(-0.23), y(0.7), centerZ] },
+    { label: "node5", position: [x(0.23), y(0.7), centerZ] },
+    { label: "node6", position: [x(-0.36), y(0.57), centerZ] },
+    { label: "node7", position: [x(0.36), y(0.57), centerZ] },
+    { label: "node8", position: [x(-0.43), y(0.39, 0.035), frontZ] },
+    { label: "node9", position: [x(0.43), y(0.39, 0.035), frontZ] },
+    { label: "node10", position: [x(-0.13), y(0.28), centerZ] },
+    { label: "node11", position: [x(0.13), y(0.28), centerZ] },
+    { label: "node12", position: [x(-0.14), y(0.04, -0.035), frontZ] },
+    { label: "node13", position: [x(0.14), y(0.04, -0.035), frontZ] },
   ];
 }
 
@@ -506,6 +507,29 @@ function findNearestFixedRegionPoint(points: FixedRegionPoint[], target: Vector3
   }
 
   return nearest;
+}
+
+function findNearestFixedRegionPointIndex(points: FixedRegionPoint[], scene: Object3D, event: ThreeEvent<PointerEvent>): number {
+  let nearestIndex = 0;
+  let nearestScore = Infinity;
+
+  for (let index = 0; index < points.length; index += 1) {
+    const point = points[index];
+    reusableFixedWorldPoint.fromArray(point.position);
+    scene.localToWorld(reusableFixedWorldPoint);
+
+    const rayDistance = event.ray.distanceSqToPoint(reusableFixedWorldPoint);
+    const cameraDistance = event.camera.position.distanceToSquared(reusableFixedWorldPoint);
+    const oxygenTankBias = point.label === "node3" ? 0.72 : 1;
+    const score = (rayDistance * 12 + cameraDistance * 0.018) * oxygenTankBias;
+
+    if (score < nearestScore) {
+      nearestIndex = index;
+      nearestScore = score;
+    }
+  }
+
+  return nearestIndex;
 }
 
 function findNearestConnectedFixedRegionPoint(points: FixedRegionPoint[], sourceLabel: FixedRegionLabel, excludeLabel?: FixedRegionLabel): FixedRegionPoint | null {
@@ -1027,6 +1051,7 @@ diffuseColor.a = clamp(revealOpacity, 0.08, 1.0);
 const reusableHoverPoint = new Vector3();
 const reusableStablePoint = new Vector3();
 const reusableFixedInteraction = new Vector3();
+const reusableFixedWorldPoint = new Vector3();
 const reusableFixedPathPoint = new Vector3();
 const reusableFixedPathStart = new Vector3();
 const reusableFixedPathEnd = new Vector3();

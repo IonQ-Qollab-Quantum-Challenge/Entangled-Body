@@ -44,10 +44,13 @@ export async function measure(
   shots = 1024,
   options: { interaction?: QuantumInteraction; seed?: number } = {},
 ): Promise<unknown> {
+  const safeIntensity = clamp(intensity, 0, 1);
+  const safeShots = Math.round(clamp(shots, 1, 8192));
+  const safeSeed = typeof options.seed === "number" && Number.isFinite(options.seed) ? Math.max(0, Math.round(options.seed)) : undefined;
   return requestJson(`${API_BASE}/quantum/measure`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ region, intensity, shots, ...options }),
+    body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, seed: safeSeed }),
   });
 }
 
@@ -58,7 +61,8 @@ async function requestJson(url: string, init: RequestInit): Promise<unknown> {
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
     if (!response.ok) {
-      throw new Error(`Request failed with ${response.status}`);
+      const detail = await response.text();
+      throw new Error(detail ? `Request failed with ${response.status}: ${detail}` : `Request failed with ${response.status}`);
     }
     return response.json();
   } catch (error) {
@@ -69,4 +73,9 @@ async function requestJson(url: string, init: RequestInit): Promise<unknown> {
   } finally {
     window.clearTimeout(timeout);
   }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return min;
+  return Math.max(min, Math.min(max, value));
 }

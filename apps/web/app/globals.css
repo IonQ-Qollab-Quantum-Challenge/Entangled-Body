@@ -19,6 +19,81 @@ button {
   font: inherit;
 }
 
+.scene-title {
+  position: fixed;
+  left: 50%;
+  top: 30px;
+  z-index: 14;
+  display: grid;
+  gap: 16px;
+  width: min(760px, calc(100vw - 32px));
+  pointer-events: none;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.scene-title__name {
+  font-size: 84px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.scene-title__subtitle {
+  color: rgba(245, 247, 251, 0.68);
+  font-size: 36px;
+  line-height: 1.1;
+}
+
+.scene-status {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 22;
+  max-width: min(520px, calc(100vw - 48px));
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 93, 122, 0.28);
+  border-radius: 6px;
+  background: rgba(35, 9, 16, 0.82);
+  color: #ffb7c4;
+  font-size: 13px;
+  line-height: 1.35;
+  backdrop-filter: blur(12px);
+}
+
+.scene-mode-switch {
+  position: fixed;
+  left: 24px;
+  top: 24px;
+  z-index: 22;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: 270px;
+  padding: 4px;
+  border: 1px solid rgba(196, 223, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(9, 14, 21, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.scene-mode-switch__button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(245, 247, 251, 0.68);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.scene-mode-switch__button--active {
+  background: rgba(98, 215, 255, 0.18);
+  color: #f5f7fb;
+  box-shadow: inset 0 0 0 1px rgba(133, 241, 189, 0.24);
+}
+
 .quantum-dashboard {
   position: fixed;
   right: 24px;
@@ -147,11 +222,18 @@ button {
 }
 
 .quantum-dashboard__grid,
-.quantum-dashboard__state {
+.quantum-dashboard__state,
+.quantum-dashboard__inspect-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 16px;
+}
+
+.quantum-dashboard__inspect-node {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(196, 223, 255, 0.14);
 }
 
 .quantum-dashboard__metric {
@@ -409,6 +491,32 @@ button {
 }
 
 @media (max-width: 920px) {
+  .scene-title {
+    top: 18px;
+    gap: 8px;
+  }
+
+  .scene-title__name {
+    font-size: 42px;
+  }
+
+  .scene-title__subtitle {
+    font-size: 16px;
+  }
+
+  .scene-status {
+    left: 16px;
+    bottom: calc(48vh + 28px);
+    max-width: calc(100vw - 32px);
+  }
+
+  .scene-mode-switch {
+    left: 16px;
+    top: auto;
+    bottom: calc(48vh + 28px);
+    width: min(270px, calc(100vw - 32px));
+  }
+
   .quantum-dashboard {
     left: 16px;
     right: 16px;

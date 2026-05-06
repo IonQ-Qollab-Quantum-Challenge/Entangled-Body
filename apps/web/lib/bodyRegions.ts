@@ -74,10 +74,10 @@ export function regionFromSpatialPosition(x: number, y: number, minY: number, ma
 
   if (normalizedY > 0.78) return "head";
   if (normalizedY > 0.47) {
-    if (x < -0.38) return "leftArm";
-    if (x > 0.38) return "rightArm";
+    if (x < -0.38) return "rightArm";
+    if (x > 0.38) return "leftArm";
     return "torso";
   }
 
-  return x < 0 ? "leftLeg" : "rightLeg";
+  return x < 0 ? "rightLeg" : "leftLeg";
 }

@@ -5,6 +5,7 @@
   "description": "Entangled Body monorepo bootstrap",
   "scripts": {
     "setup": "bash ./scripts/setup.sh",
+    "build": "next build apps/web",
     "dev": "next dev apps/web -p 3000",
     "web:dev": "next dev apps/web -p 3000",
     "api:dev": "bash ./scripts/dev.sh",
