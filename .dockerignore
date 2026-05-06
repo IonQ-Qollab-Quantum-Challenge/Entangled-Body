@@ -1,0 +1,15 @@
+.git
+.venv
+node_modules
+apps/web/.next
+.next
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
