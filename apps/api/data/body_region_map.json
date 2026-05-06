@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "regions": [
+    {
+      "id": "head",
+      "label": "Head",
+      "qubitIndex": 0
+    },
+    {
+      "id": "torso",
+      "label": "Torso",
+      "qubitIndex": 1
+    },
+    {
+      "id": "leftArm",
+      "label": "Left arm",
+      "qubitIndex": 2
+    },
+    {
+      "id": "rightArm",
+      "label": "Right arm",
+      "qubitIndex": 3
+    },
+    {
+      "id": "leftLeg",
+      "label": "Left leg",
+      "qubitIndex": 4
+    },
+    {
+      "id": "rightLeg",
+      "label": "Right leg",
+      "qubitIndex": 5
+    }
+  ],
+  "entanglementLinks": [
+    {
+      "source": "head",
+      "target": "torso"
+    },
+    {
+      "source": "leftArm",
+      "target": "rightArm"
+    },
+    {
+      "source": "leftLeg",
+      "target": "rightLeg"
+    },
+    {
+      "source": "torso",
+      "target": "leftArm"
+    },
+    {
+      "source": "torso",
+      "target": "rightLeg"
+    }
+  ]
+}
