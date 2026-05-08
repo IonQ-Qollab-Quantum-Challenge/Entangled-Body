@@ -8,16 +8,24 @@ import { emptyRegionStates, type BodyQuantumState, type BodyRegion } from "../li
 import { mapQuantumToBody } from "../lib/mapQuantumToBody";
 import { getPrecomputed, measure, type QuantumMeasurementPayload } from "../lib/quantumClient";
 import { CameraControls } from "./CameraControls";
-import { InteractionLayer } from "./InteractionLayer";
 import { OriginalGlbModel } from "./OriginalGlbModel";
 import { QuantumNodeDashboard } from "./QuantumNodeDashboard";
 import { SpaceEnvironment } from "./SpaceEnvironment";
-import { TileCloudBody } from "./TileCloudBody";
 
 const MODEL_URL = "/models/astronaut_rigged_and_animated.glb";
 
+type AppMode = "inspect" | "measurement";
+
+type InspectedNode = {
+  index: number;
+  qubitIndex: number;
+  region: BodyRegion;
+  point: Vector3Tuple;
+};
+
 export function BodyScene() {
   const [mode, setMode] = useState<"superposition" | "collapse">("superposition");
+  const [appMode, setAppMode] = useState<AppMode>("inspect");
   const [collapseProgress, setCollapseProgress] = useState(0);
   const [quantumState, setQuantumState] = useState<BodyQuantumState>({
     regionStates: emptyRegionStates(),
@@ -27,12 +35,12 @@ export function BodyScene() {
   const [latestMeasurement, setLatestMeasurement] = useState<QuantumMeasurementPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [renderMode, setRenderMode] = useState<"tileCloud" | "originalModel">("originalModel");
   const [hoveredRegion, setHoveredRegion] = useState<BodyRegion | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<Vector3Tuple | null>(null);
   const [modelStable, setModelStable] = useState(false);
   const [stablePoint, setStablePoint] = useState<Vector3Tuple | null>(null);
   const [stableProgress, setStableProgress] = useState(0);
+  const [inspectedNode, setInspectedNode] = useState<InspectedNode | null>(null);
   const precomputedCache = useRef(new Map<BodyRegion, BodyQuantumState>());
   const lastHoverRegion = useRef<BodyRegion | null>(null);
   const collapseFrame = useRef<number | null>(null);
@@ -45,57 +53,15 @@ export function BodyScene() {
     };
   }, []);
 
-  const startStableReveal = useCallback((point?: Vector3Tuple) => {
-    if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
-    if (stableReturnTimeout.current !== null) {
-      window.clearTimeout(stableReturnTimeout.current);
-      stableReturnTimeout.current = null;
-    }
-    setModelStable(true);
-    setStablePoint(point ?? hoveredPoint);
-    setStableProgress(0);
-
-    const started = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - started) / 3000);
-      setStableProgress(progress);
-      if (progress < 1) {
-        collapseFrame.current = requestAnimationFrame(tick);
-      } else {
-        collapseFrame.current = null;
-        stableReturnTimeout.current = window.setTimeout(() => {
-          const returnStarted = performance.now();
-          const returnTick = (returnNow: number) => {
-            const returnProgress = Math.max(0, 1 - (returnNow - returnStarted) / 3000);
-            setStableProgress(returnProgress);
-            if (returnProgress > 0) {
-              collapseFrame.current = requestAnimationFrame(returnTick);
-            } else {
-              collapseFrame.current = null;
-              stableReturnTimeout.current = null;
-              setModelStable(false);
-              setStablePoint(null);
-            }
-          };
-
-          collapseFrame.current = requestAnimationFrame(returnTick);
-        }, 5000);
-      }
-    };
-
-    collapseFrame.current = requestAnimationFrame(tick);
-  }, [hoveredPoint]);
-
-  const startCollapseAnimation = useCallback(() => {
+  const startCollapseAnimation = useCallback((point?: Vector3Tuple) => {
     if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
     if (stableReturnTimeout.current !== null) {
       window.clearTimeout(stableReturnTimeout.current);
       stableReturnTimeout.current = null;
     }
     setMode("collapse");
-    setRenderMode("tileCloud");
-    setModelStable(false);
-    setStablePoint(null);
+    setModelStable(true);
+    setStablePoint(point ?? hoveredPoint);
     setStableProgress(0);
     setCollapseProgress(0);
 
@@ -103,6 +69,7 @@ export function BodyScene() {
     const tick = (now: number) => {
       const progress = Math.min(1, (now - started) / 1600);
       setCollapseProgress(progress);
+      setStableProgress(progress);
       if (progress < 1) {
         collapseFrame.current = requestAnimationFrame(tick);
       } else {
@@ -111,7 +78,7 @@ export function BodyScene() {
     };
 
     collapseFrame.current = requestAnimationFrame(tick);
-  }, []);
+  }, [hoveredPoint]);
 
   const applyWeakMeasurement = useCallback(async (region: BodyRegion | null, point?: Vector3Tuple) => {
     setHoveredRegion(region);
@@ -141,8 +108,8 @@ export function BodyScene() {
     }
   }, [modelStable]);
 
-  const applyStrongMeasurement = useCallback(async (region: BodyRegion, point?: Vector3Tuple) => {
-    if (modelStable || loading) return;
+  const inspectQuantumNode = useCallback(async (region: BodyRegion, point?: Vector3Tuple, nodeIndex = 0) => {
+    if (loading) return;
 
     try {
       setLoading(true);
@@ -151,27 +118,37 @@ export function BodyScene() {
       setHoveredPoint(point ?? null);
       setMode("superposition");
       setCollapseProgress(0);
-      setRenderMode("originalModel");
-      startStableReveal(point);
-      const payload = await measure(region, 1, 1024, { interaction: "click" });
+      setModelStable(false);
+      setStablePoint(null);
+      setStableProgress(0);
+      setInspectedNode({
+        index: nodeIndex,
+        qubitIndex: nodeIndex % 6,
+        region,
+        point: point ?? hoveredPoint ?? [0, 0, 0],
+      });
+      const payload = await measure(region, 0.45, 512, { interaction: "hover" });
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Simulator measurement failed.");
+      setError(requestError instanceof Error ? requestError.message : "Quantum node inspection failed.");
     } finally {
       setLoading(false);
     }
-  }, [loading, modelStable, startStableReveal]);
+  }, [hoveredPoint, loading]);
 
-  const triggerGlobalCollapse = useCallback(async () => {
+  const triggerGlobalCollapse = useCallback(async (region?: BodyRegion, point?: Vector3Tuple) => {
     if (loading) return;
 
     try {
       setLoading(true);
       setError(null);
-      startCollapseAnimation();
-      const payload = await measure(hoveredRegion ?? "torso", 1, 1024, { interaction: "hold" });
+      setInspectedNode(null);
+      setHoveredRegion(region ?? hoveredRegion);
+      setHoveredPoint(point ?? hoveredPoint);
+      startCollapseAnimation(point);
+      const payload = await measure(region ?? hoveredRegion ?? "torso", 1, 1024, { interaction: "hold" });
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
@@ -180,7 +157,34 @@ export function BodyScene() {
     } finally {
       setLoading(false);
     }
-  }, [hoveredRegion, loading, startCollapseAnimation]);
+  }, [hoveredPoint, hoveredRegion, loading, startCollapseAnimation]);
+
+  const applyStrongMeasurement = useCallback((region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => {
+    if (appMode === "inspect") {
+      void inspectQuantumNode(region, point, nodeIndex);
+      return;
+    }
+
+    void triggerGlobalCollapse(region, point);
+  }, [appMode, inspectQuantumNode, triggerGlobalCollapse]);
+
+  const handleGlobalCollapse = useCallback(() => {
+    if (appMode !== "measurement") return;
+    void triggerGlobalCollapse();
+  }, [appMode, triggerGlobalCollapse]);
+
+  const switchAppMode = useCallback((nextMode: AppMode) => {
+    setAppMode(nextMode);
+    setError(null);
+    setInspectedNode(null);
+    if (nextMode === "inspect") {
+      setMode("superposition");
+      setCollapseProgress(0);
+      setModelStable(false);
+      setStablePoint(null);
+      setStableProgress(0);
+    }
+  }, []);
 
   return (
     <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -192,40 +196,44 @@ export function BodyScene() {
         <pointLight position={[-2.4, 1.2, 2.2]} intensity={0.72} color="#85d8ff" />
         <SpaceEnvironment />
         <group rotation={[0, -0.08, 0]}>
-          {renderMode === "tileCloud" ? (
-            <>
-              <TileCloudBody modelUrl={MODEL_URL} quantumState={quantumState} mode={mode} collapseProgress={collapseProgress} tileCount={18000} />
-              <InteractionLayer onHoverRegion={applyWeakMeasurement} onMeasureRegion={applyStrongMeasurement} onGlobalCollapse={triggerGlobalCollapse} />
-            </>
-          ) : (
-            <OriginalGlbModel
-              modelUrl={MODEL_URL}
-              hoveredRegion={hoveredRegion}
-              hoveredPoint={hoveredPoint}
-              onHoverRegion={applyWeakMeasurement}
-              onMeasureRegion={applyStrongMeasurement}
-              onGlobalCollapse={triggerGlobalCollapse}
-              stable={modelStable}
-              stablePoint={stablePoint}
-              stableProgress={stableProgress}
-              opacity={0.22}
-              waveStrength={0}
-            />
-          )}
+          <OriginalGlbModel
+            modelUrl={MODEL_URL}
+            hoveredRegion={hoveredRegion}
+            hoveredPoint={hoveredPoint}
+            onHoverRegion={applyWeakMeasurement}
+            onMeasureRegion={applyStrongMeasurement}
+            onGlobalCollapse={handleGlobalCollapse}
+            stable={modelStable}
+            stablePoint={stablePoint}
+            stableProgress={stableProgress}
+            opacity={0.22}
+            waveStrength={0}
+          />
         </group>
         <CameraControls />
       </Canvas>
-      <div style={{ position: "fixed", left: "50%", top: 30, transform: "translateX(-50%)", display: "grid", gap: 16, textAlign: "center" }}>
-        <div style={{ fontSize: 84, fontWeight: 900, letterSpacing: 0 }}>Entangled Body</div>
-        <div style={{ fontSize: 36, color: "rgba(245,247,251,0.68)" }}>original GLB | transparent wave | hold collapse</div>
+      <div className="scene-title" aria-hidden="true">
+        <div className="scene-title__name">Entangled Body</div>
+        <div className="scene-title__subtitle">original GLB | transparent wave | hold collapse</div>
       </div>
+      <div className="scene-mode-switch" aria-label="Interaction mode">
+        <button type="button" className={appMode === "inspect" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("inspect")}>
+          Inspect
+        </button>
+        <button type="button" className={appMode === "measurement" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("measurement")}>
+          Measurement
+        </button>
+      </div>
+      {error ? <div className="scene-status" role="status" aria-live="polite">{error}</div> : null}
       <QuantumNodeDashboard
         latestMeasurement={latestMeasurement}
+        appMode={appMode}
         mode={mode}
         collapseProgress={collapseProgress}
         stableProgress={stableProgress}
         modelStable={modelStable}
         loading={loading}
+        inspectedNode={inspectedNode}
       />
     </main>
   );

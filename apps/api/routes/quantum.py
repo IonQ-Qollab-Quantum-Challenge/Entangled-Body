@@ -5,10 +5,11 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from quantum.mapper import REGIONS, build_entanglement_links, counts_to_node_states, counts_to_region_states
 from quantum.run_simulator import run_aer_measurement
+from quantum.run_ionq import ionq_is_configured
 
 router = APIRouter(prefix="/quantum", tags=["quantum"])
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "precomputed_samples.json"
@@ -21,13 +22,21 @@ class MeasurementRequest(BaseModel):
     interaction: Literal["hover", "click", "hold"] = Field(default="hover")
     seed: int | None = Field(default=None)
 
+    @field_validator("region")
+    @classmethod
+    def validate_region(cls, value: str) -> str:
+        if value not in REGIONS:
+            allowed = ", ".join(REGIONS)
+            raise ValueError(f"Unknown body region '{value}'. Expected one of: {allowed}.")
+        return value
+
 
 @router.get("/health")
 def quantum_health() -> dict:
     return {
         "ok": True,
         "mode": "simulator",
-        "ionq_configured": False,
+        "ionq_configured": ionq_is_configured(),
     }
 
 
