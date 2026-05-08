@@ -39,6 +39,176 @@ const QUANTUM_NODE_LABELS = [
   "Left Foot",
 ];
 
+type ModeCopy = {
+  eyebrow: string;
+  title: string;
+  metaphor: string;
+  science: string;
+};
+
+const MODE_COPY: { measurement: ModeCopy } = {
+  measurement: {
+    eyebrow: "Global Collapse",
+    title: "When the Field Chooses a Shape",
+    metaphor:
+      "The body is held between many possible arrangements until measurement turns uncertainty into one visible state. Lines, bits, and motion become a record of that decision.",
+    science:
+      "Measurement mode sends a stronger interaction to the quantum simulator. Multiple shots sample a six-qubit circuit, producing count distributions and a dominant bitstring that are mapped back into activation, coherence, displacement, and entanglement links across the body.",
+  },
+};
+
+const INSPECT_REGION_COPY: Record<BodyRegion, ModeCopy> = {
+  head: {
+    eyebrow: "Local Observation",
+    title: "The Signal of Thought",
+    metaphor:
+      "The head behaves like a small observatory. A touch here feels like asking the body where attention begins before it becomes a visible decision.",
+    science:
+      "This region maps the selected head node to a qubit sample. The returned bit, probability, and coherence values describe the local simulated state without triggering a full-body collapse. It shows strong entanglement with adjacent regions such as the torso, where local observation can influence nearby body states.",
+  },
+  torso: {
+    eyebrow: "Local Observation",
+    title: "The Chamber of Resonance",
+    metaphor:
+      "The torso holds the body like a resonant chamber. When it is inspected, the field answers from the center, where separate signals begin to feel connected.",
+    science:
+      "Torso inspection samples the qubit associated with the body's central region. Its probability and coherence are used to visualize how stable the local state remains under observation. It shows strong entanglement with adjacent regions including the head, arms, and legs, acting as the main bridge between local states.",
+  },
+  leftArm: {
+    eyebrow: "Local Observation",
+    title: "The Left Arc of Contact",
+    metaphor:
+      "The left arm is a line reaching outward. Inspecting it turns gesture into evidence, as if touch could leave a measurable trace in the field.",
+    science:
+      "Left arm inspection maps the selected arm node to a qubit index and reads a localized measurement result. The UI shows whether the node remains superposed or has collapsed in the sampled state. It shows strong entanglement with adjacent regions such as the torso and shoulder-side nodes.",
+  },
+  rightArm: {
+    eyebrow: "Local Observation",
+    title: "The Right Arc of Action",
+    metaphor:
+      "The right arm carries intention into space. A measurement here feels like watching possibility become an action before the whole body follows.",
+    science:
+      "Right arm inspection performs the same localized node measurement for the right-side region. The sampled bit and coherence value are used to represent local quantum response. It shows strong entanglement with adjacent regions such as the torso and shoulder-side nodes.",
+  },
+  leftLeg: {
+    eyebrow: "Local Observation",
+    title: "The Left Anchor of Balance",
+    metaphor:
+      "The left leg is an anchor beneath uncertainty. Inspecting it asks how a body keeps balance while its state is still unfinished.",
+    science:
+      "Left leg inspection samples the mapped lower-body qubit. The resulting probability and coherence values indicate how the local simulated state contributes to body stability. It shows strong entanglement with adjacent regions such as the torso and neighboring lower-body nodes.",
+  },
+  rightLeg: {
+    eyebrow: "Local Observation",
+    title: "The Right Anchor of Motion",
+    metaphor:
+      "The right leg suggests the beginning of movement. A touch here reads the body at the edge between stillness and departure.",
+    science:
+      "Right leg inspection reads the corresponding lower-body qubit sample. Its measured bit, probability, and coherence are displayed as the local state of that region. It shows strong entanglement with adjacent regions such as the torso and neighboring lower-body nodes.",
+  },
+};
+
+const INSPECT_NODE_COPY: Record<number, ModeCopy> = {
+  0: {
+    eyebrow: "Local Observation",
+    title: "Head: The Observing Field",
+    metaphor: "The helmet becomes a quiet observatory, where attention gathers before the body chooses how to answer.",
+    science:
+      "The head node is mapped to the upper-body qubit sample. It is strongly entangled with adjacent nodes such as Chest and Oxygen Tank, so a local observation here can shift the nearby central network.",
+  },
+  1: {
+    eyebrow: "Local Observation",
+    title: "Chest: The Resonant Core",
+    metaphor: "The chest receives signals like breath inside a chamber, turning separate points into one shared pulse.",
+    science:
+      "The chest node sits at the central bridge of the network. It shows strong entanglement with Head, Torso, Oxygen Tank, and both shoulder nodes, making it one of the most connected local states.",
+  },
+  2: {
+    eyebrow: "Local Observation",
+    title: "Torso: The Body's Axis",
+    metaphor: "The torso holds the body's vertical axis, where upper motion and lower balance meet inside one field.",
+    science:
+      "The torso node connects the upper body to both legs. It is strongly entangled with Chest, Oxygen Tank, Right Leg, and Left Leg, so its measurement describes how the body transfers state between regions.",
+  },
+  3: {
+    eyebrow: "Local Observation",
+    title: "Oxygen Tank: The Hidden Reservoir",
+    metaphor: "The oxygen tank is the unseen reserve behind the body, a quiet source that keeps the field alive.",
+    science:
+      "The oxygen tank node is treated as a back-side support state. It is strongly entangled with Head, Chest, Torso, and both shoulder nodes, linking visible posture to hidden structural context.",
+  },
+  4: {
+    eyebrow: "Local Observation",
+    title: "Right Shoulder: The Joint of Intention",
+    metaphor: "The right shoulder is a hinge between center and reach, where intention prepares to leave the torso.",
+    science:
+      "The right shoulder node is strongly entangled with Chest, Oxygen Tank, and Right Arm. Its local measurement helps explain how the central state propagates into the right-side limb.",
+  },
+  5: {
+    eyebrow: "Local Observation",
+    title: "Left Shoulder: The Joint of Contact",
+    metaphor: "The left shoulder opens a path from the body's center toward contact with the surrounding field.",
+    science:
+      "The left shoulder node is strongly entangled with Chest, Oxygen Tank, and Left Arm. Its sampled state represents the transfer between the torso network and the left-side limb.",
+  },
+  6: {
+    eyebrow: "Local Observation",
+    title: "Right Arm: The Arc of Action",
+    metaphor: "The right arm extends possibility outward, turning the body's inner signal into visible action.",
+    science:
+      "The right arm node is strongly entangled with Right Shoulder and Right Hand. Measurement here reads a mid-limb state between central intention and endpoint response.",
+  },
+  7: {
+    eyebrow: "Local Observation",
+    title: "Left Arm: The Arc of Contact",
+    metaphor: "The left arm reaches like a drawn line, carrying the body's relation into space.",
+    science:
+      "The left arm node is strongly entangled with Left Shoulder and Left Hand. Its local sample shows how a nearby shoulder state continues toward the hand.",
+  },
+  8: {
+    eyebrow: "Local Observation",
+    title: "Right Hand: The Point of Touch",
+    metaphor: "The right hand is where the body becomes an instrument, leaving a precise trace in the field.",
+    science:
+      "The right hand node is strongly entangled with Right Arm. As an endpoint node, its measurement emphasizes how a local touch reflects the state carried through the adjacent limb.",
+  },
+  9: {
+    eyebrow: "Local Observation",
+    title: "Left Hand: The Point of Response",
+    metaphor: "The left hand catches the field at its edge, where relation becomes a visible response.",
+    science:
+      "The left hand node is strongly entangled with Left Arm. Its sampled bit and coherence describe the endpoint response of the left-side connection chain.",
+  },
+  10: {
+    eyebrow: "Local Observation",
+    title: "Right Leg: The Descent of Motion",
+    metaphor: "The right leg carries the body's uncertainty downward, preparing stillness to become movement.",
+    science:
+      "The right leg node is strongly entangled with Torso and Right Foot. It represents how the central body state is transferred into lower-body motion and support.",
+  },
+  11: {
+    eyebrow: "Local Observation",
+    title: "Left Leg: The Descent of Balance",
+    metaphor: "The left leg steadies the field, giving the body's possible states a place to stand.",
+    science:
+      "The left leg node is strongly entangled with Torso and Left Foot. Its measurement explains how lower-body balance remains coupled to the central torso state.",
+  },
+  12: {
+    eyebrow: "Local Observation",
+    title: "Right Foot: The Grounded Trace",
+    metaphor: "The right foot marks the boundary between body and ground, where motion leaves its final trace.",
+    science:
+      "The right foot node is strongly entangled with Right Leg. As a lower endpoint, it shows how the adjacent leg state resolves into support and contact.",
+  },
+  13: {
+    eyebrow: "Local Observation",
+    title: "Left Foot: The Grounded Echo",
+    metaphor: "The left foot answers the body from below, turning balance into a quiet echo of the whole network.",
+    science:
+      "The left foot node is strongly entangled with Left Leg. Its local measurement reflects the endpoint of the left lower-body entanglement chain.",
+  },
+};
+
 type InspectedNode = {
   index: number;
   qubitIndex: number;
@@ -137,6 +307,10 @@ export function QuantumNodeDashboard({
   const inspectedNodeState = getInspectedNodeState(nodeStates, inspectedNode);
   const sceneProgress = mode === "collapse" ? collapseProgress : stableProgress;
   const sceneStatus = loading ? "measuring" : modelStable ? "stabilizing" : "ready";
+  const copy =
+    appMode === "inspect"
+      ? INSPECT_NODE_COPY[inspectedNode?.index ?? -1] ?? INSPECT_REGION_COPY[inspectedNode?.region ?? "torso"]
+      : MODE_COPY.measurement;
 
   if (appMode === "inspect" && !inspectedNode) return null;
 
@@ -144,25 +318,29 @@ export function QuantumNodeDashboard({
     <aside className={`quantum-dashboard quantum-dashboard--${appMode}`} aria-label="Quantum node dashboard">
       <header className="quantum-dashboard__header">
         <div>
-          <div className="quantum-dashboard__eyebrow">{appMode === "inspect" ? "Quantum Node" : "Entangled State"}</div>
-          <h2>{appMode === "inspect" ? "Node Inspector" : "Collapse Monitor"}</h2>
+          <div className="quantum-dashboard__eyebrow">{copy.eyebrow}</div>
+          <h2>{copy.title}</h2>
         </div>
         <StatusPill status={status} />
       </header>
 
-      <section className="quantum-dashboard__scene-status" aria-label="Scene quantum status">
-        <div className="quantum-dashboard__scene-status-header">
-          <span>{mode}</span>
-          <strong>{sceneStatus}</strong>
-        </div>
-        <div className="quantum-dashboard__progress">
-          <i style={{ width: `${Math.round(sceneProgress * 100)}%` }} />
-        </div>
-        <div className="quantum-dashboard__scene-status-footer">
-          <span>{mode === "collapse" ? "collapse" : "stability"}</span>
-          <b>{Math.round(sceneProgress * 100)}%</b>
-        </div>
-      </section>
+      {appMode === "measurement" ? (
+        <section className="quantum-dashboard__scene-status" aria-label="Scene quantum status">
+          <div className="quantum-dashboard__scene-status-header">
+            <span>{mode}</span>
+            <strong>{sceneStatus}</strong>
+          </div>
+          <div className="quantum-dashboard__progress">
+            <i style={{ width: `${Math.round(sceneProgress * 100)}%` }} />
+          </div>
+          <div className="quantum-dashboard__scene-status-footer">
+            <span>{mode === "collapse" ? "collapse" : "stability"}</span>
+            <b>{Math.round(sceneProgress * 100)}%</b>
+          </div>
+        </section>
+      ) : null}
+
+      <ModeStory copy={copy} />
 
       {appMode === "measurement" ? (
         <MeasurementState measurement={effectiveMeasurement} />
@@ -174,7 +352,6 @@ export function QuantumNodeDashboard({
               <Metric label="Node" value={formatNodeLabel(inspectedNode?.index)} />
               <Metric label="Qubit" value={String(inspectedNode?.qubitIndex ?? "--")} />
               <Metric label="Bit" value={inspectedNodeState?.measuredBit ?? "-"} />
-              <Metric label="State" value={inspectedNodeState?.collapsed ? "Collapsed" : "Superposed"} />
               <Metric label="Probability" value={formatStateValue(inspectedNodeState?.probability)} />
               <Metric label="Coherence" value={formatStateValue(inspectedNodeState?.coherence)} />
             </div>
@@ -239,12 +416,24 @@ export function QuantumNodeDashboard({
             <Metric label="Links" value={String(effectiveMeasurement?.entanglementLinks?.length ?? 0)} />
           </section>
 
-          <NodeStateList nodeStates={nodeStates} />
+          <NodeStateList nodeStates={nodeStates} showState={false} />
         </>
       )}
 
       {effectiveMeasurement?.fallbackReason ? <div className="quantum-dashboard__warning">Fallback: {effectiveMeasurement.fallbackReason}</div> : null}
     </aside>
+  );
+}
+
+function ModeStory({ copy }: { copy: ModeCopy }) {
+  return (
+    <section className="quantum-dashboard__story" aria-label="Mode story and scientific information">
+      <p>{copy.metaphor}</p>
+      <div className="quantum-dashboard__science">
+        <div className="quantum-dashboard__section-title">Scientific Information</div>
+        <p>{copy.science}</p>
+      </div>
+    </section>
   );
 }
 
@@ -327,16 +516,16 @@ function clampInteger(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
-function NodeStateList({ nodeStates }: { nodeStates: QuantumNodeState[] }) {
+function NodeStateList({ nodeStates, showState = true }: { nodeStates: QuantumNodeState[]; showState?: boolean }) {
   return (
     <section className="quantum-dashboard__nodes">
       <div className="quantum-dashboard__section-title">Node States</div>
       {nodeStates.length > 0 ? (
         nodeStates.map((node) => (
-          <div key={`${node.region}-${node.qubitIndex}`} className="quantum-dashboard__node-row">
+          <div key={`${node.region}-${node.qubitIndex}`} className={showState ? "quantum-dashboard__node-row" : "quantum-dashboard__node-row quantum-dashboard__node-row--compact"}>
             <span>{REGION_LABELS[node.region]}</span>
             <b>{node.measuredBit}</b>
-            <i>{node.collapsed ? "collapsed" : "superposed"}</i>
+            {showState ? <i>{node.collapsed ? "collapsed" : "measured"}</i> : null}
           </div>
         ))
       ) : (

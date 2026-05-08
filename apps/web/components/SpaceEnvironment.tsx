@@ -39,11 +39,16 @@ type EarthTextures = {
   glow: Texture;
 };
 
-export function SpaceEnvironment() {
+type SpaceEnvironmentProps = {
+  sunOcclusion?: number;
+};
+
+export function SpaceEnvironment({ sunOcclusion = 0 }: SpaceEnvironmentProps) {
   const [moon, setMoon] = useState<LoadedMoon | null>(null);
   const [sunTextures, setSunTextures] = useState<SunTextures | null>(null);
   const [earthTextures, setEarthTextures] = useState<EarthTextures | null>(null);
-  const sunLensflare = useMemo(() => (sunTextures ? createSunLensflare(sunTextures) : null), [sunTextures]);
+  const flareVisibility = 1 - Math.max(0, Math.min(1, sunOcclusion));
+  const sunLensflare = useMemo(() => (sunTextures ? createSunLensflare(sunTextures, flareVisibility) : null), [sunTextures, flareVisibility]);
 
   const starPositions = useMemo(() => {
     const starCount = 9000;
@@ -232,11 +237,11 @@ export function SpaceEnvironment() {
       </points>
 
       {earthTextures ? (
-        <group position={[18, 3.8, -40]}>
-          <sprite scale={[5.8, 5.8, 1]}>
+        <group position={[9.4, -13.2, -42]}>
+          <sprite scale={[17.4, 17.4, 1]}>
             <spriteMaterial map={earthTextures.glow} color="#78c9ff" transparent opacity={0.65} blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
           </sprite>
-          <sprite scale={[4.7, 4.7, 1]}>
+          <sprite scale={[14.1, 14.1, 1]}>
             <spriteMaterial map={earthTextures.disc} transparent depthWrite={false} toneMapped={false} />
           </sprite>
         </group>
@@ -353,12 +358,11 @@ function createEarthGlowTexture() {
   return finalizeCanvasTexture(canvas);
 }
 
-function createSunLensflare(textures: SunTextures) {
+function createSunLensflare(textures: SunTextures, opacity: number) {
   const flare = new Lensflare();
-  flare.addElement(new LensflareElement(textures.flare, 760, 0, new Color("#fff7d6")));
-  flare.addElement(new LensflareElement(textures.flare, 160, 0.38, new Color("#ffd06a")));
-  flare.addElement(new LensflareElement(textures.flare, 92, 0.63, new Color("#ff8f45")));
-  flare.addElement(new LensflareElement(textures.flare, 52, 0.86, new Color("#fff0a0")));
+  flare.addElement(new LensflareElement(textures.flare, 160, 0.38, new Color("#ffd06a").multiplyScalar(opacity)));
+  flare.addElement(new LensflareElement(textures.flare, 92, 0.63, new Color("#ff8f45").multiplyScalar(opacity)));
+  flare.addElement(new LensflareElement(textures.flare, 52, 0.86, new Color("#fff0a0").multiplyScalar(opacity)));
   return flare;
 }
 

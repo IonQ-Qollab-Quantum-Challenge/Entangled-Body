@@ -64,3 +64,11 @@ The frontend `mapQuantumToBody.ts` normalizes that JSON into body region state a
 ```bash
 docker compose up --build
 ```
+
+## Music Credit
+
+Song: Eden  
+Composer: Onycs  
+Website: https://www.youtube.com/channel/UCNQ6vKZ5ogEZ0tM2TvxLhQA  
+License: Creative Commons (BY 3.0) https://creativecommons.org/licenses/by/3.0/  
+Music powered by BreakingCopyright: https://breakingcopyright.com
