@@ -29,9 +29,12 @@ type OriginalGlbModelProps = {
   onHoverRegion: (region: BodyRegion | null, point?: Vector3Tuple) => void;
   onMeasureRegion: (region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => void;
   onGlobalCollapse: () => void;
+  onReady?: () => void;
   stable: boolean;
   stablePoint: Vector3Tuple | null;
   stableProgress: number;
+  connectionBreakPoint: Vector3Tuple | null;
+  connectionBreakProgress: number;
   opacity?: number;
   waveStrength?: number;
 };
@@ -122,9 +125,12 @@ export function OriginalGlbModel({
   onHoverRegion,
   onMeasureRegion,
   onGlobalCollapse,
+  onReady,
   stable,
   stablePoint,
   stableProgress,
+  connectionBreakPoint,
+  connectionBreakProgress,
   opacity = 0.34,
   waveStrength = 1,
 }: OriginalGlbModelProps) {
@@ -179,12 +185,13 @@ export function OriginalGlbModel({
         maxZ: box.max.z,
         position: [-center.x * scale, GROUND_Y - box.min.y * scale, -center.z * scale],
       });
+      onReady?.();
     });
 
     return () => {
       cancelled = true;
     };
-  }, [modelUrl, opacity]);
+  }, [modelUrl, onReady, opacity]);
 
   useEffect(() => {
     return () => {
@@ -245,7 +252,9 @@ export function OriginalGlbModel({
   const hasSurfaceInteraction = Boolean(hoveredPoint || stablePoint);
   const surfaceGlowOpacity = (hasSurfaceInteraction ? 0.34 : 0.05) * surfaceFade;
   const surfacePointOpacity = (hasSurfaceInteraction ? 0.34 : 0.68) * surfaceFade;
-  const activeFixedPointSource = stable && stablePoint ? stablePoint : hoveredPoint;
+  const activeFixedPointSource = connectionBreakPoint ?? (stable && stablePoint ? stablePoint : hoveredPoint);
+  const showFullEntanglement = Boolean(hoveredPoint || connectionBreakPoint || stablePoint);
+  const disconnectEntanglement = Boolean(connectionBreakPoint);
 
   function clearHoldTimer() {
     if (holdTimer.current === null) return;
@@ -276,7 +285,14 @@ export function OriginalGlbModel({
           </points>
         </>
       ) : null}
-      <FixedRegionPoints model={model} interactionPoint={activeFixedPointSource} connectAll={stable && Boolean(stablePoint)} connectionProgress={stableProgress} />
+      <FixedRegionPoints
+        model={model}
+        interactionPoint={activeFixedPointSource}
+        connectAll={showFullEntanglement}
+        connectionProgress={disconnectEntanglement ? connectionBreakProgress : 1}
+        disconnect={disconnectEntanglement}
+        pointOpacity={disconnectEntanglement ? 1 - connectionBreakProgress : 1}
+      />
       <primitive
         object={model.scene}
         onPointerMove={(event: ThreeEvent<PointerEvent>) => {
@@ -315,16 +331,20 @@ function FixedRegionPoints({
   interactionPoint,
   connectAll,
   connectionProgress,
+  disconnect,
+  pointOpacity,
 }: {
   model: LoadedModel;
   interactionPoint: Vector3Tuple | null;
   connectAll: boolean;
   connectionProgress: number;
+  disconnect: boolean;
+  pointOpacity: number;
 }) {
   const points = useMemo(() => getFixedRegionPoints(model), [model]);
   const networkGeometry = useMemo(
-    () => createFixedRegionNetworkGeometry(points, model.scene, interactionPoint, connectAll, connectionProgress),
-    [connectAll, connectionProgress, interactionPoint, model.scene, points],
+    () => createFixedRegionNetworkGeometry(points, model.scene, interactionPoint, connectAll, connectionProgress, disconnect),
+    [connectAll, connectionProgress, disconnect, interactionPoint, model.scene, points],
   );
 
   return (
@@ -339,18 +359,20 @@ function FixedRegionPoints({
           </lineSegments>
         </>
       ) : null}
-      {points.map((point) => (
-        <group key={point.label} position={point.position}>
-          <mesh renderOrder={40} raycast={ignorePointRaycast}>
-            <sphereGeometry args={[0.026, 16, 16]} />
-            <meshBasicMaterial color="#9beaff" transparent opacity={0.96} depthTest={false} depthWrite={false} toneMapped={false} />
-          </mesh>
-          <mesh renderOrder={39} raycast={ignorePointRaycast}>
-            <sphereGeometry args={[0.072, 16, 16]} />
-            <meshBasicMaterial color="#1fbfff" transparent opacity={0.22} blending={AdditiveBlending} depthTest={false} depthWrite={false} toneMapped={false} />
-          </mesh>
-        </group>
-      ))}
+      {pointOpacity > 0.001
+        ? points.map((point) => (
+            <group key={point.label} position={point.position}>
+              <mesh renderOrder={40} raycast={ignorePointRaycast}>
+                <sphereGeometry args={[0.026, 16, 16]} />
+                <meshBasicMaterial color="#9beaff" transparent opacity={0.96 * pointOpacity} depthTest={false} depthWrite={false} toneMapped={false} />
+              </mesh>
+              <mesh renderOrder={39} raycast={ignorePointRaycast}>
+                <sphereGeometry args={[0.072, 16, 16]} />
+                <meshBasicMaterial color="#1fbfff" transparent opacity={0.22 * pointOpacity} blending={AdditiveBlending} depthTest={false} depthWrite={false} toneMapped={false} />
+              </mesh>
+            </group>
+          ))
+        : null}
     </group>
   );
 }
@@ -390,12 +412,13 @@ function createFixedRegionNetworkGeometry(
   interactionPoint: Vector3Tuple | null,
   connectAll: boolean,
   connectionProgress: number,
+  disconnect: boolean,
 ): BufferGeometry | null {
   const segments: number[] = [];
 
   if (connectAll) {
     const source = interactionPoint ? findNearestFixedRegionPointFromWorld(points, scene, interactionPoint) : null;
-    pushAllFixedRegionConnections(segments, points, connectionProgress, source);
+    pushAllFixedRegionConnections(segments, points, connectionProgress, source, disconnect);
   } else {
     const path = getFixedRegionPath(points, scene, interactionPoint);
     if (path.length < 2) return null;
@@ -428,7 +451,13 @@ function getFixedRegionPath(points: FixedRegionPoint[], scene: Object3D, interac
   return [source, firstTarget, secondTarget, thirdTarget].filter((point): point is FixedRegionPoint => Boolean(point));
 }
 
-function pushAllFixedRegionConnections(segments: number[], points: FixedRegionPoint[], connectionProgress: number, source: FixedRegionPoint | null): void {
+function pushAllFixedRegionConnections(
+  segments: number[],
+  points: FixedRegionPoint[],
+  connectionProgress: number,
+  source: FixedRegionPoint | null,
+  disconnect: boolean,
+): void {
   const pointByLabel = new Map(points.map((point) => [point.label, point]));
   const usedEdges = new Set<string>();
   const edges: Array<[FixedRegionPoint, FixedRegionPoint]> = [];
@@ -451,9 +480,11 @@ function pushAllFixedRegionConnections(segments: number[], points: FixedRegionPo
     const rightScore = fixedRegionRevealScore(right[0], right[1], graphDistances);
     return leftScore - rightScore;
   });
-  const visibleEdgeCount = Math.min(orderedEdges.length, Math.ceil(orderedEdges.length * Math.max(0, Math.min(1, connectionProgress))));
+  const progress = Math.max(0, Math.min(1, connectionProgress));
+  const hiddenEdgeCount = disconnect ? Math.floor(orderedEdges.length * progress) : 0;
+  const visibleEdgeCount = disconnect ? orderedEdges.length : Math.min(orderedEdges.length, Math.ceil(orderedEdges.length * progress));
 
-  for (let index = 0; index < visibleEdgeCount; index += 1) {
+  for (let index = hiddenEdgeCount; index < visibleEdgeCount; index += 1) {
     pushFixedRegionSegment(segments, orderedEdges[index][0], orderedEdges[index][1]);
   }
 }

@@ -7,7 +7,9 @@ import type { Vector3Tuple } from "three";
 import { emptyRegionStates, type BodyQuantumState, type BodyRegion } from "../lib/bodyRegions";
 import { mapQuantumToBody } from "../lib/mapQuantumToBody";
 import { getPrecomputed, measure, type QuantumMeasurementPayload } from "../lib/quantumClient";
+import { BackgroundMusic } from "./BackgroundMusic";
 import { CameraControls } from "./CameraControls";
+import { LoadingIntro } from "./LoadingIntro";
 import { OriginalGlbModel } from "./OriginalGlbModel";
 import { QuantumNodeDashboard } from "./QuantumNodeDashboard";
 import { SpaceEnvironment } from "./SpaceEnvironment";
@@ -38,23 +40,56 @@ export function BodyScene() {
   const [hoveredRegion, setHoveredRegion] = useState<BodyRegion | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<Vector3Tuple | null>(null);
   const [modelStable, setModelStable] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
   const [stablePoint, setStablePoint] = useState<Vector3Tuple | null>(null);
   const [stableProgress, setStableProgress] = useState(0);
+  const [connectionBreakPoint, setConnectionBreakPoint] = useState<Vector3Tuple | null>(null);
+  const [connectionBreakProgress, setConnectionBreakProgress] = useState(0);
   const [inspectedNode, setInspectedNode] = useState<InspectedNode | null>(null);
   const precomputedCache = useRef(new Map<BodyRegion, BodyQuantumState>());
   const lastHoverRegion = useRef<BodyRegion | null>(null);
   const collapseFrame = useRef<number | null>(null);
+  const connectionBreakFrame = useRef<number | null>(null);
+  const stableReturnFrame = useRef<number | null>(null);
   const stableReturnTimeout = useRef<number | null>(null);
+  const collapseLocked = modelStable || collapseFrame.current !== null || stableReturnTimeout.current !== null || stableReturnFrame.current !== null;
 
   useEffect(() => {
     return () => {
       if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
+      if (connectionBreakFrame.current !== null) cancelAnimationFrame(connectionBreakFrame.current);
+      if (stableReturnFrame.current !== null) cancelAnimationFrame(stableReturnFrame.current);
       if (stableReturnTimeout.current !== null) window.clearTimeout(stableReturnTimeout.current);
     };
   }, []);
 
+  const startConnectionBreakAnimation = useCallback((point?: Vector3Tuple) => {
+    if (connectionBreakFrame.current !== null) cancelAnimationFrame(connectionBreakFrame.current);
+    setConnectionBreakPoint(point ?? hoveredPoint);
+    setConnectionBreakProgress(0);
+
+    const started = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - started) / 1300);
+      setConnectionBreakProgress(progress);
+      if (progress < 1) {
+        connectionBreakFrame.current = requestAnimationFrame(tick);
+      } else {
+        connectionBreakFrame.current = null;
+      }
+    };
+
+    connectionBreakFrame.current = requestAnimationFrame(tick);
+  }, [hoveredPoint]);
+
   const startCollapseAnimation = useCallback((point?: Vector3Tuple) => {
     if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
+    if (stableReturnFrame.current !== null) {
+      cancelAnimationFrame(stableReturnFrame.current);
+      stableReturnFrame.current = null;
+    }
     if (stableReturnTimeout.current !== null) {
       window.clearTimeout(stableReturnTimeout.current);
       stableReturnTimeout.current = null;
@@ -74,6 +109,33 @@ export function BodyScene() {
         collapseFrame.current = requestAnimationFrame(tick);
       } else {
         collapseFrame.current = null;
+        stableReturnTimeout.current = window.setTimeout(() => {
+          stableReturnTimeout.current = null;
+          const returnStarted = performance.now();
+          const returnTick = (returnNow: number) => {
+            const returnProgress = Math.min(1, (returnNow - returnStarted) / 2600);
+            const reverseProgress = 1 - returnProgress;
+
+            setStableProgress(reverseProgress);
+            setCollapseProgress(reverseProgress);
+            setConnectionBreakProgress(reverseProgress);
+
+            if (returnProgress < 1) {
+              stableReturnFrame.current = requestAnimationFrame(returnTick);
+            } else {
+              stableReturnFrame.current = null;
+              setMode("superposition");
+              setCollapseProgress(0);
+              setModelStable(false);
+              setStablePoint(null);
+              setStableProgress(0);
+              setConnectionBreakPoint(null);
+              setConnectionBreakProgress(0);
+            }
+          };
+
+          stableReturnFrame.current = requestAnimationFrame(returnTick);
+        }, 3400);
       }
     };
 
@@ -86,6 +148,10 @@ export function BodyScene() {
     if (modelStable) return;
     if (!region) {
       lastHoverRegion.current = null;
+      if (connectionBreakFrame.current === null) {
+        setConnectionBreakPoint(null);
+        setConnectionBreakProgress(0);
+      }
       return;
     }
 
@@ -139,7 +205,7 @@ export function BodyScene() {
   }, [hoveredPoint, loading]);
 
   const triggerGlobalCollapse = useCallback(async (region?: BodyRegion, point?: Vector3Tuple) => {
-    if (loading) return;
+    if (loading || collapseLocked) return;
 
     try {
       setLoading(true);
@@ -147,6 +213,7 @@ export function BodyScene() {
       setInspectedNode(null);
       setHoveredRegion(region ?? hoveredRegion);
       setHoveredPoint(point ?? hoveredPoint);
+      startConnectionBreakAnimation(point);
       startCollapseAnimation(point);
       const payload = await measure(region ?? hoveredRegion ?? "torso", 1, 1024, { interaction: "hold" });
       const mapped = mapQuantumToBody(payload);
@@ -157,7 +224,7 @@ export function BodyScene() {
     } finally {
       setLoading(false);
     }
-  }, [hoveredPoint, hoveredRegion, loading, startCollapseAnimation]);
+  }, [collapseLocked, hoveredPoint, hoveredRegion, loading, startCollapseAnimation, startConnectionBreakAnimation]);
 
   const applyStrongMeasurement = useCallback((region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => {
     if (appMode === "inspect") {
@@ -173,16 +240,34 @@ export function BodyScene() {
     void triggerGlobalCollapse();
   }, [appMode, triggerGlobalCollapse]);
 
+  const handleModelReady = useCallback(() => {
+    setModelReady(true);
+  }, []);
+
+  const handleIntroComplete = useCallback(() => {
+    setIntroComplete(true);
+  }, []);
+
+  const handleIntroExitStart = useCallback(() => {
+    setMusicPlaying(true);
+  }, []);
+
   const switchAppMode = useCallback((nextMode: AppMode) => {
     setAppMode(nextMode);
     setError(null);
     setInspectedNode(null);
     if (nextMode === "inspect") {
+      if (connectionBreakFrame.current !== null) {
+        cancelAnimationFrame(connectionBreakFrame.current);
+        connectionBreakFrame.current = null;
+      }
       setMode("superposition");
       setCollapseProgress(0);
       setModelStable(false);
       setStablePoint(null);
       setStableProgress(0);
+      setConnectionBreakPoint(null);
+      setConnectionBreakProgress(0);
     }
   }, []);
 
@@ -194,7 +279,7 @@ export function BodyScene() {
         <directionalLight position={[2.6, 4.2, 3.4]} intensity={1.85} />
         <directionalLight position={[-2.2, 1.4, 2.4]} intensity={0.72} color="#bfe8ff" />
         <pointLight position={[-2.4, 1.2, 2.2]} intensity={0.72} color="#85d8ff" />
-        <SpaceEnvironment />
+        <SpaceEnvironment sunOcclusion={modelStable ? stableProgress : 0} />
         <group rotation={[0, -0.08, 0]}>
           <OriginalGlbModel
             modelUrl={MODEL_URL}
@@ -203,19 +288,18 @@ export function BodyScene() {
             onHoverRegion={applyWeakMeasurement}
             onMeasureRegion={applyStrongMeasurement}
             onGlobalCollapse={handleGlobalCollapse}
+            onReady={handleModelReady}
             stable={modelStable}
             stablePoint={stablePoint}
             stableProgress={stableProgress}
+            connectionBreakPoint={connectionBreakPoint}
+            connectionBreakProgress={connectionBreakProgress}
             opacity={0.22}
             waveStrength={0}
           />
         </group>
         <CameraControls />
       </Canvas>
-      <div className="scene-title" aria-hidden="true">
-        <div className="scene-title__name">Entangled Body</div>
-        <div className="scene-title__subtitle">original GLB | transparent wave | hold collapse</div>
-      </div>
       <div className="scene-mode-switch" aria-label="Interaction mode">
         <button type="button" className={appMode === "inspect" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("inspect")}>
           Inspect
@@ -224,6 +308,8 @@ export function BodyScene() {
           Measurement
         </button>
       </div>
+      <LoadingIntro modelReady={modelReady} onComplete={handleIntroComplete} onExitStart={handleIntroExitStart} visible={!introComplete} />
+      <BackgroundMusic playing={musicPlaying} />
       {error ? <div className="scene-status" role="status" aria-live="polite">{error}</div> : null}
       <QuantumNodeDashboard
         latestMeasurement={latestMeasurement}
