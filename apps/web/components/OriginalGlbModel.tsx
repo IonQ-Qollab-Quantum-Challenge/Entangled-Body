@@ -3,7 +3,7 @@
 import type { ThreeEvent } from "@react-three/fiber";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AdditiveBlending, Box3, BufferGeometry, Float32BufferAttribute, Material, Mesh, NormalBlending, Object3D, SkinnedMesh, Vector3, type Vector3Tuple } from "three";
+import { AdditiveBlending, Box3, BufferGeometry, Float32BufferAttribute, Material, Mesh, NormalBlending, Object3D, PointsMaterial, SkinnedMesh, Vector3, type Vector3Tuple } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
 
@@ -63,6 +63,12 @@ type WaveMaterialBinding = {
 type WaveMaterial = Material & {
   userData: {
     entangledUniforms?: Record<string, { value: number | Vector3 }>;
+  };
+};
+
+type MaskedPointMaterial = PointsMaterial & {
+  userData: {
+    hoverMaskUniforms?: Record<string, { value: number | Vector3 }>;
   };
 };
 
@@ -136,6 +142,14 @@ export function OriginalGlbModel({
 }: OriginalGlbModelProps) {
   const [model, setModel] = useState<LoadedModel | null>(null);
   const holdTimer = useRef<number | null>(null);
+  const surfaceGlowMaterial = useMemo(
+    () => prepareMaskedPointMaterial({ size: 0.042, opacity: 0.05, blending: AdditiveBlending }),
+    [],
+  );
+  const surfacePointMaterial = useMemo(
+    () => prepareMaskedPointMaterial({ size: 0.015, opacity: 0.68 }),
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -201,6 +215,13 @@ export function OriginalGlbModel({
     };
   }, [model]);
 
+  useEffect(() => {
+    return () => {
+      surfaceGlowMaterial.dispose();
+      surfacePointMaterial.dispose();
+    };
+  }, [surfaceGlowMaterial, surfacePointMaterial]);
+
   useFrame(({ clock }) => {
     if (!model) return;
 
@@ -214,6 +235,8 @@ export function OriginalGlbModel({
     const surfaceInteractionPoint = stable && stablePoint ? stablePoint : hoveredPoint;
 
     updateSurfaceGlowPointColors(model.surfaceGlowPointGeometry, model.scene, surfaceInteractionPoint);
+    updateMaskedPointMaterial(surfaceGlowMaterial, surfaceInteractionPoint, model.scene, surfaceGlowOpacityForFrame(stable, stableProgress, hoveredPoint, stablePoint));
+    updateMaskedPointMaterial(surfacePointMaterial, surfaceInteractionPoint, model.scene, surfacePointOpacityForFrame(stable, stableProgress, hoveredPoint, stablePoint));
     for (const binding of model.bindings) {
       const material = binding.material;
       material.opacity = effectiveOpacity;
@@ -237,7 +260,7 @@ export function OriginalGlbModel({
       uniforms.uHoveredRegion.value = regionToId(hoveredRegion);
       uniforms.uHasHoverPoint.value = hasHoverPoint;
       uniforms.uHoverPoint.value = localHover;
-      uniforms.uHoverRadius.value = 0.92;
+      uniforms.uHoverRadius.value = 1.0;
       uniforms.uHasStablePoint.value = hasStablePoint;
       uniforms.uStablePoint.value = localStable;
       uniforms.uStableProgress.value = stableProgress;
@@ -249,9 +272,6 @@ export function OriginalGlbModel({
   if (!model) return null;
 
   const surfaceFade = stable ? 1 - smoothstep(0.08, 0.82, stableProgress) : 1;
-  const hasSurfaceInteraction = Boolean(hoveredPoint || stablePoint);
-  const surfaceGlowOpacity = (hasSurfaceInteraction ? 0.34 : 0.05) * surfaceFade;
-  const surfacePointOpacity = (hasSurfaceInteraction ? 0.34 : 0.68) * surfaceFade;
   const activeFixedPointSource = connectionBreakPoint ?? (stable && stablePoint ? stablePoint : hoveredPoint);
   const showFullEntanglement = Boolean(hoveredPoint || connectionBreakPoint || stablePoint);
   const disconnectEntanglement = Boolean(connectionBreakPoint);
@@ -278,10 +298,10 @@ export function OriginalGlbModel({
       {surfaceFade > 0.001 ? (
         <>
           <points geometry={model.surfaceGlowPointGeometry} frustumCulled={false} renderOrder={3} raycast={ignorePointRaycast}>
-            <pointsMaterial size={0.042} sizeAttenuation vertexColors transparent opacity={surfaceGlowOpacity} blending={AdditiveBlending} depthTest depthWrite={false} />
+            <primitive object={surfaceGlowMaterial} attach="material" />
           </points>
           <points geometry={model.surfacePointGeometry} frustumCulled={false} renderOrder={4} raycast={ignorePointRaycast}>
-            <pointsMaterial size={0.015} sizeAttenuation vertexColors transparent opacity={surfacePointOpacity} depthTest depthWrite={false} />
+            <primitive object={surfacePointMaterial} attach="material" />
           </points>
         </>
       ) : null}
@@ -1000,6 +1020,100 @@ function isSkinnedMesh(mesh: Mesh): mesh is SkinnedMesh {
 }
 
 function ignorePointRaycast(): void {}
+
+function surfaceGlowOpacityForFrame(stable: boolean, stableProgress: number, hoveredPoint: Vector3Tuple | null, stablePoint: Vector3Tuple | null): number {
+  const surfaceFade = stable ? 1 - smoothstep(0.08, 0.82, stableProgress) : 1;
+  const hasSurfaceInteraction = Boolean(hoveredPoint || stablePoint);
+  return (hasSurfaceInteraction ? 0.34 : 0.05) * surfaceFade;
+}
+
+function surfacePointOpacityForFrame(stable: boolean, stableProgress: number, hoveredPoint: Vector3Tuple | null, stablePoint: Vector3Tuple | null): number {
+  const surfaceFade = stable ? 1 - smoothstep(0.08, 0.82, stableProgress) : 1;
+  const hasSurfaceInteraction = Boolean(hoveredPoint || stablePoint);
+  return (hasSurfaceInteraction ? 0.34 : 0.68) * surfaceFade;
+}
+
+function prepareMaskedPointMaterial({
+  size,
+  opacity,
+  blending = NormalBlending,
+}: {
+  size: number;
+  opacity: number;
+  blending?: typeof AdditiveBlending | typeof NormalBlending;
+}): MaskedPointMaterial {
+  const material = new PointsMaterial({
+    size,
+    sizeAttenuation: true,
+    vertexColors: true,
+    transparent: true,
+    opacity,
+    blending,
+    depthTest: true,
+    depthWrite: false,
+  }) as MaskedPointMaterial;
+
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uHasHiddenPoint = { value: 0 };
+    shader.uniforms.uHiddenPoint = { value: new Vector3() };
+    shader.uniforms.uHiddenRadius = { value: HOVER_COLOR_RADIUS * 0.92 };
+    material.userData.hoverMaskUniforms = shader.uniforms;
+
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "void main() {",
+        `
+uniform float uHasHiddenPoint;
+uniform vec3 uHiddenPoint;
+uniform float uHiddenRadius;
+varying float vPointCloudVisibility;
+
+void main() {`,
+      )
+      .replace(
+        "#include <begin_vertex>",
+        `#include <begin_vertex>
+  float hiddenInfluence = uHasHiddenPoint * (1.0 - smoothstep(uHiddenRadius * 0.55, uHiddenRadius, distance(transformed, uHiddenPoint)));
+  vPointCloudVisibility = 1.0 - hiddenInfluence;`,
+      );
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "void main() {",
+        `
+varying float vPointCloudVisibility;
+
+void main() {`,
+      )
+      .replace(
+        "#include <clipping_planes_fragment>",
+        `#include <clipping_planes_fragment>
+if (vPointCloudVisibility <= 0.02) discard;`,
+      )
+      .replace(
+        "#include <opaque_fragment>",
+        `diffuseColor.a *= smoothstep(0.0, 1.0, vPointCloudVisibility);
+#include <opaque_fragment>`,
+      );
+  };
+
+  material.needsUpdate = true;
+  return material;
+}
+
+function updateMaskedPointMaterial(material: MaskedPointMaterial, interactionPoint: Vector3Tuple | null, scene: Object3D, opacity: number): void {
+  material.opacity = opacity;
+
+  const uniforms = material.userData.hoverMaskUniforms;
+  if (!uniforms) return;
+
+  uniforms.uHasHiddenPoint.value = interactionPoint ? 1 : 0;
+  if (interactionPoint) {
+    reusableSurfaceInteraction.fromArray(interactionPoint);
+    scene.worldToLocal(reusableSurfaceInteraction);
+    uniforms.uHiddenPoint.value = reusableSurfaceInteraction;
+  }
+}
 
 function prepareMaterial(source: Material, opacity: number): WaveMaterial {
   const material = source.clone() as WaveMaterial;
