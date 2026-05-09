@@ -218,6 +218,7 @@ type InspectedNode = {
 type QuantumNodeDashboardProps = {
   latestMeasurement?: QuantumMeasurementPayload | null;
   appMode: "inspect" | "measurement";
+  visible: boolean;
   mode: "superposition" | "collapse";
   collapseProgress: number;
   stableProgress: number;
@@ -229,6 +230,7 @@ type QuantumNodeDashboardProps = {
 export function QuantumNodeDashboard({
   latestMeasurement = null,
   appMode,
+  visible,
   mode,
   collapseProgress,
   stableProgress,
@@ -246,6 +248,10 @@ export function QuantumNodeDashboard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<string>("--");
+  const hasInspectedNode = inspectedNode !== null;
+  const targetVisible = visible && (appMode !== "inspect" || hasInspectedNode);
+  const [renderDashboard, setRenderDashboard] = useState(targetVisible);
+  const [animateDashboard, setAnimateDashboard] = useState(targetVisible);
 
   const refreshHealth = useCallback(async () => {
     try {
@@ -266,6 +272,24 @@ export function QuantumNodeDashboard({
   useEffect(() => {
     void refreshHealth();
   }, [refreshHealth]);
+
+  useEffect(() => {
+    if (targetVisible) {
+      setRenderDashboard(true);
+      let secondFrame = 0;
+      const firstFrame = window.requestAnimationFrame(() => {
+        secondFrame = window.requestAnimationFrame(() => setAnimateDashboard(true));
+      });
+      return () => {
+        window.cancelAnimationFrame(firstFrame);
+        window.cancelAnimationFrame(secondFrame);
+      };
+    }
+
+    setAnimateDashboard(false);
+    const timeout = window.setTimeout(() => setRenderDashboard(false), 340);
+    return () => window.clearTimeout(timeout);
+  }, [targetVisible]);
 
   useEffect(() => {
     if (latestMeasurement) {
@@ -312,10 +336,16 @@ export function QuantumNodeDashboard({
       ? INSPECT_NODE_COPY[inspectedNode?.index ?? -1] ?? INSPECT_REGION_COPY[inspectedNode?.region ?? "torso"]
       : MODE_COPY.measurement;
 
-  if (appMode === "inspect" && !inspectedNode) return null;
+  if (!renderDashboard) return null;
 
   return (
-    <aside className={`quantum-dashboard quantum-dashboard--${appMode}`} aria-label="Quantum node dashboard">
+    <aside
+      className={`quantum-dashboard quantum-dashboard--${appMode} ${
+        animateDashboard ? "quantum-dashboard--visible" : "quantum-dashboard--hidden"
+      }`}
+      aria-hidden={!animateDashboard}
+      aria-label="Quantum node dashboard"
+    >
       <header className="quantum-dashboard__header">
         <div>
           <div className="quantum-dashboard__eyebrow">{copy.eyebrow}</div>

@@ -28,6 +28,7 @@ type InspectedNode = {
 export function BodyScene() {
   const [mode, setMode] = useState<"superposition" | "collapse">("superposition");
   const [appMode, setAppMode] = useState<AppMode>("inspect");
+  const [measurementDashboardVisible, setMeasurementDashboardVisible] = useState(false);
   const [collapseProgress, setCollapseProgress] = useState(0);
   const [quantumState, setQuantumState] = useState<BodyQuantumState>({
     regionStates: emptyRegionStates(),
@@ -253,6 +254,15 @@ export function BodyScene() {
   }, []);
 
   const switchAppMode = useCallback((nextMode: AppMode) => {
+    if (nextMode === "measurement") {
+      if (appMode === "measurement") {
+        setMeasurementDashboardVisible((visible) => !visible);
+        return;
+      }
+
+      setMeasurementDashboardVisible(true);
+    }
+
     setAppMode(nextMode);
     setError(null);
     setInspectedNode(null);
@@ -269,7 +279,7 @@ export function BodyScene() {
       setConnectionBreakPoint(null);
       setConnectionBreakProgress(0);
     }
-  }, []);
+  }, [appMode]);
 
   return (
     <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -314,6 +324,7 @@ export function BodyScene() {
       <QuantumNodeDashboard
         latestMeasurement={latestMeasurement}
         appMode={appMode}
+        visible={appMode !== "measurement" || measurementDashboardVisible}
         mode={mode}
         collapseProgress={collapseProgress}
         stableProgress={stableProgress}
