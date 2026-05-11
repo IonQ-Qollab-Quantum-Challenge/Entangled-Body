@@ -210,6 +210,96 @@ button {
   box-shadow: inset 0 0 0 1px rgba(133, 241, 189, 0.24);
 }
 
+.music-toggle {
+  position: fixed;
+  left: 306px;
+  top: 24px;
+  z-index: 22;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(196, 223, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(9, 14, 21, 0.72);
+  color: rgba(245, 247, 251, 0.78);
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, color 160ms ease;
+}
+
+.music-toggle:hover,
+.music-toggle:focus-visible {
+  border-color: rgba(133, 241, 189, 0.42);
+  background: rgba(98, 215, 255, 0.14);
+  color: #f5f7fb;
+  outline: none;
+}
+
+.music-toggle--playing {
+  box-shadow: inset 0 0 0 1px rgba(133, 241, 189, 0.24);
+}
+
+.music-toggle__icon {
+  position: relative;
+  width: 22px;
+  height: 20px;
+}
+
+.music-toggle__icon::before {
+  position: absolute;
+  left: 1px;
+  top: 6px;
+  width: 7px;
+  height: 8px;
+  border-radius: 2px 0 0 2px;
+  background: currentColor;
+  content: "";
+}
+
+.music-toggle__icon::after {
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-right: 10px solid currentColor;
+  border-bottom: 7px solid transparent;
+  content: "";
+}
+
+.music-toggle--playing .music-toggle__icon {
+  border-right: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.music-toggle--playing .music-toggle__icon::before {
+  box-shadow: 13px 1px 0 -5px currentColor;
+}
+
+.music-toggle:not(.music-toggle--playing) .music-toggle__icon {
+  transform: translateX(-1px);
+}
+
+.music-toggle:not(.music-toggle--playing) .music-toggle__icon::before {
+  box-shadow: 15px 0 0 -6px #ff5d7a;
+}
+
+.music-toggle:not(.music-toggle--playing) .music-toggle__icon::after {
+  box-shadow: 9px 0 0 -7px #ff5d7a;
+}
+
+.music-toggle:not(.music-toggle--playing)::after {
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  border-radius: 999px;
+  background: #ff5d7a;
+  content: "";
+  transform: rotate(-42deg);
+}
+
 .quantum-dashboard {
   position: fixed;
   right: 24px;
@@ -682,6 +772,14 @@ button {
     top: auto;
     bottom: calc(48vh + 28px);
     width: min(270px, calc(100vw - 32px));
+  }
+
+  .music-toggle {
+    left: auto;
+    right: 16px;
+    top: 16px;
+    width: 42px;
+    height: 42px;
   }
 
   .quantum-dashboard {
