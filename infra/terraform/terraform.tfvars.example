@@ -1,0 +1,25 @@
+project_name = "entangled-body"
+aws_region   = "us-east-1"
+
+# Private ECR example:
+# api_image_identifier      = "123456789012.dkr.ecr.us-east-1.amazonaws.com/entangled-body-api:latest"
+# api_image_repository_type = "ECR"
+# apprunner_access_role_arn = null
+
+# ECR Public example:
+api_image_identifier      = "public.ecr.aws/example/entangled-body-api:latest"
+api_image_repository_type = "ECR_PUBLIC"
+
+# Optional custom domain managed in Route 53.
+# custom_domain_name        = "entangledbody.com"
+# custom_domain_include_www = true
+# redirect_www_to_apex      = true
+
+# If the hosted zone already exists in Route 53, leave both values below as-is.
+# Terraform will look it up by custom_domain_name.
+# route53_zone_id      = null
+# create_route53_zone  = false
+
+# If there is no hosted zone yet, set create_route53_zone = true.
+# After terraform apply, point the registrar's nameservers to the
+# route53_name_servers output if the domain was not registered in Route 53.
