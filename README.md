@@ -149,7 +149,11 @@ Frontend URL:
 http://localhost:3000
 ```
 
-The frontend proxies browser requests from `/api/*` to the backend. Set `API_BASE_URL` for the Next.js process if the API is not running on `http://127.0.0.1:8000`.
+For the S3 + CloudFront deployment, the frontend is exported as static files and Next.js does not proxy API requests. Keep frontend API calls on `/api/*`; configure CloudFront with an ordered behavior that sends `/api/*` to the App Runner origin. For local development, point the browser directly at the API:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
+```
 
 ## Run the Backend
 

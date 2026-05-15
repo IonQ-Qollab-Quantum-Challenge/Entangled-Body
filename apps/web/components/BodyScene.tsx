@@ -44,6 +44,7 @@ export function BodyScene() {
   const [modelReady, setModelReady] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [musicMuted, setMusicMuted] = useState(false);
   const [stablePoint, setStablePoint] = useState<Vector3Tuple | null>(null);
   const [stableProgress, setStableProgress] = useState(0);
   const [connectionBreakPoint, setConnectionBreakPoint] = useState<Vector3Tuple | null>(null);
@@ -253,6 +254,32 @@ export function BodyScene() {
     setMusicPlaying(true);
   }, []);
 
+  const toggleMusicMuted = useCallback(() => {
+    setMusicMuted((muted) => !muted);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "m" || event.metaKey || event.ctrlKey || event.altKey) return;
+
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      toggleMusicMuted();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleMusicMuted]);
+
   const switchAppMode = useCallback((nextMode: AppMode) => {
     if (nextMode === "measurement") {
       if (appMode === "measurement") {
@@ -318,8 +345,18 @@ export function BodyScene() {
           Measurement
         </button>
       </div>
+      <button
+        type="button"
+        className={!musicMuted ? "music-toggle music-toggle--playing" : "music-toggle"}
+        onClick={toggleMusicMuted}
+        aria-label={musicMuted ? "Unmute background music" : "Mute background music"}
+        aria-pressed={musicMuted}
+        title={musicMuted ? "Unmute background music (M)" : "Mute background music (M)"}
+      >
+        <span className="music-toggle__icon" aria-hidden="true" />
+      </button>
       <LoadingIntro modelReady={modelReady} onComplete={handleIntroComplete} onExitStart={handleIntroExitStart} visible={!introComplete} />
-      <BackgroundMusic playing={musicPlaying} />
+      <BackgroundMusic playing={musicPlaying} muted={musicMuted} onPlayingChange={setMusicPlaying} />
       {error ? <div className="scene-status" role="status" aria-live="polite">{error}</div> : null}
       <QuantumNodeDashboard
         latestMeasurement={latestMeasurement}

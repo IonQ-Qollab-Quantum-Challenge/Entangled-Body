@@ -30,6 +30,11 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+terraform.tfvars
+terraform.tfvars.json
+*.tfstate
+*.tfstate.*
+.terraform/
 
 # Local tooling
 .codex/
