@@ -180,6 +180,23 @@ IONQ_TIMEOUT_SECONDS=120
 
 `aer` is always the default backend. IonQ hardware requests only submit to a QPU when `IONQ_API_KEY` is set and `IONQ_ENABLE_HARDWARE=true`; otherwise the API returns an Aer fallback payload with a `fallbackReason`.
 
+IonQ backend smoke tests can be run with pytest by passing the test file directly:
+
+```bash
+cd apps/api
+python -m pytest tests/smoke_quantum_backends.py -q
+```
+
+That command checks the Aer response contract, IonQ simulator fallback behavior, and the safety gate that prevents QPU submission when hardware is disabled. The real IonQ hardware integration test is skipped by default. To submit an actual IonQ QPU job, opt in explicitly:
+
+```bash
+cd apps/api
+IONQ_API_KEY=your-ionq-api-key \
+IONQ_ENABLE_HARDWARE=true \
+RUN_IONQ_HARDWARE_TEST=true \
+python -m pytest tests/smoke_quantum_backends.py::IonQHardwareIntegrationTests::test_real_ionq_hardware_execution_when_explicitly_enabled -q
+```
+
 Backend URLs:
 
 - `GET http://localhost:8000/health`
