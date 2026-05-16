@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { BODY_REGIONS, type BodyRegion, type QuantumNodeState } from "../lib/bodyRegions";
-import { getQuantumHealth, measure, type QuantumInteraction, type QuantumMeasurementPayload } from "../lib/quantumClient";
+import { getQuantumHealth, measure, type QuantumBackend, type QuantumInteraction, type QuantumMeasurementPayload } from "../lib/quantumClient";
 
 type NodeStatus = "checking" | "online" | "degraded" | "offline";
 
@@ -11,15 +11,26 @@ type QuantumHealth = {
   ok?: boolean;
   mode?: string;
   ionq_configured?: boolean;
+  ionq_hardware_enabled?: boolean;
+  default_backend?: string;
+  available_backends?: QuantumBackend[];
 };
 
 const REGION_LABELS: Record<BodyRegion, string> = {
   head: "Head",
+  chest: "Chest",
   torso: "Torso",
-  leftArm: "Left Arm",
+  oxygenTank: "Oxygen Tank",
+  rightShoulder: "Right Shoulder",
+  leftShoulder: "Left Shoulder",
   rightArm: "Right Arm",
-  leftLeg: "Left Leg",
+  leftArm: "Left Arm",
+  rightHand: "Right Hand",
+  leftHand: "Left Hand",
   rightLeg: "Right Leg",
+  leftLeg: "Left Leg",
+  rightFoot: "Right Foot",
+  leftFoot: "Left Foot",
 };
 
 const QUANTUM_NODE_LABELS = [
@@ -53,11 +64,11 @@ const MODE_COPY: { measurement: ModeCopy } = {
     metaphor:
       "The body is held between many possible arrangements until measurement turns uncertainty into one visible state. Lines, bits, and motion become a record of that decision.",
     science:
-      "Measurement mode sends a stronger interaction to the quantum simulator. Multiple shots sample a six-qubit circuit, producing count distributions and a dominant bitstring that are mapped back into activation, coherence, displacement, and entanglement links across the body.",
+      "Measurement mode sends a stronger interaction to the quantum simulator. Multiple shots sample a 14-qubit circuit, producing count distributions and a dominant bitstring that are mapped back into activation, coherence, displacement, and entanglement links across the body.",
   },
 };
 
-const INSPECT_REGION_COPY: Record<BodyRegion, ModeCopy> = {
+const INSPECT_REGION_COPY: Partial<Record<BodyRegion, ModeCopy>> = {
   head: {
     eyebrow: "Local Observation",
     title: "The Signal of Thought",
@@ -106,6 +117,14 @@ const INSPECT_REGION_COPY: Record<BodyRegion, ModeCopy> = {
     science:
       "Right leg inspection reads the corresponding lower-body qubit sample. Its measured bit, probability, and coherence are displayed as the local state of that region. It shows strong entanglement with adjacent regions such as the torso and neighboring lower-body nodes.",
   },
+};
+
+const DEFAULT_INSPECT_COPY: ModeCopy = {
+  eyebrow: "Local Observation",
+  title: "The Local Quantum Node",
+  metaphor: "A selected point becomes the place where the body answers with one sampled state.",
+  science:
+    "This node is backed by its own qubit in the simulator. The returned bit, probability, and coherence values are mapped into the connected body network and displayed as the local measurement response.",
 };
 
 const INSPECT_NODE_COPY: Record<number, ModeCopy> = {
@@ -242,6 +261,7 @@ export function QuantumNodeDashboard({
   const [health, setHealth] = useState<QuantumHealth | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<BodyRegion>("torso");
   const [interaction, setInteraction] = useState<QuantumInteraction>("click");
+  const [backend, setBackend] = useState<QuantumBackend>("aer");
   const [shots, setShots] = useState(512);
   const [seed, setSeed] = useState(42);
   const [measurement, setMeasurement] = useState<QuantumMeasurementPayload | null>(null);
@@ -304,6 +324,7 @@ export function QuantumNodeDashboard({
       const payload = normalizeMeasurement(
         await measure(selectedRegion, interaction === "hover" ? 0.45 : 1, shots, {
           interaction,
+          backend,
           seed,
         }),
       );
@@ -316,7 +337,7 @@ export function QuantumNodeDashboard({
       setBusy(false);
       setLastChecked(new Date().toLocaleTimeString());
     }
-  }, [interaction, seed, selectedRegion, shots]);
+  }, [backend, interaction, seed, selectedRegion, shots]);
 
   const effectiveMeasurement = measurement ?? latestMeasurement;
   const topCounts = useMemo(() => {
@@ -333,7 +354,7 @@ export function QuantumNodeDashboard({
   const sceneStatus = loading ? "measuring" : modelStable ? "stabilizing" : "ready";
   const copy =
     appMode === "inspect"
-      ? INSPECT_NODE_COPY[inspectedNode?.index ?? -1] ?? INSPECT_REGION_COPY[inspectedNode?.region ?? "torso"]
+      ? INSPECT_NODE_COPY[inspectedNode?.index ?? -1] ?? INSPECT_REGION_COPY[inspectedNode?.region ?? "torso"] ?? DEFAULT_INSPECT_COPY
       : MODE_COPY.measurement;
 
   if (!renderDashboard) return null;
@@ -389,8 +410,8 @@ export function QuantumNodeDashboard({
 
           <section className="quantum-dashboard__grid">
             <Metric label="Mode" value={health?.mode ?? "--"} />
-            <Metric label="IonQ" value={health?.ionq_configured ? "Configured" : "Simulator"} />
-            <Metric label="Qubits" value={String(effectiveMeasurement?.qubits ?? 6)} />
+            <Metric label="IonQ" value={health?.ionq_configured ? (health.ionq_hardware_enabled ? "QPU Armed" : "Configured") : "Aer"} />
+            <Metric label="Qubits" value={String(effectiveMeasurement?.qubits ?? 14)} />
             <Metric label="Last Check" value={lastChecked} />
           </section>
 
@@ -416,6 +437,15 @@ export function QuantumNodeDashboard({
             </label>
 
             <label>
+              Backend
+              <select value={backend} onChange={(event) => setBackend(event.target.value as QuantumBackend)}>
+                <option value="aer">Aer Local</option>
+                <option value="ionq_simulator">IonQ Simulator</option>
+                <option value="ionq_hardware">IonQ Hardware QPU</option>
+              </select>
+            </label>
+
+            <label>
               Shots
               <input type="number" min={32} max={8192} step={32} value={shots} onChange={(event) => setShots(clampInteger(Number(event.target.value), 32, 8192))} />
             </label>
@@ -436,6 +466,7 @@ export function QuantumNodeDashboard({
           </div>
 
           {error ? <div className="quantum-dashboard__error">{error}</div> : null}
+          {backend === "ionq_hardware" ? <div className="quantum-dashboard__warning">Hardware QPU only runs when IONQ_ENABLE_HARDWARE=true.</div> : null}
 
           <ProbeResult measurement={effectiveMeasurement} topCounts={topCounts} />
 
@@ -472,7 +503,7 @@ function MeasurementState({ measurement }: { measurement?: QuantumMeasurementPay
     <section className="quantum-dashboard__state">
       <Metric label="Entangled Links" value={String(measurement?.entanglementLinks?.length ?? 0)} />
       <Metric label="Dominant State" value={measurement?.dominantBitstring ?? "------"} />
-      <Metric label="Qubits" value={String(measurement?.qubits ?? 6)} />
+      <Metric label="Qubits" value={String(measurement?.qubits ?? 14)} />
       <Metric label="Shots" value={String(measurement?.shots ?? "--")} />
     </section>
   );
@@ -482,7 +513,7 @@ function ProbeResult({ measurement, topCounts }: { measurement?: QuantumMeasurem
   return (
     <section className="quantum-dashboard__result">
       <div className="quantum-dashboard__result-header">
-        <span>Dominant</span>
+        <span>{measurement?.requestedBackend ?? measurement?.backend ?? "Dominant"}</span>
         <strong>{measurement?.dominantBitstring ?? "------"}</strong>
       </div>
       <div className="quantum-dashboard__bars">

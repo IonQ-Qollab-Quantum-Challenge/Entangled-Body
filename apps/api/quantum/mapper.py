@@ -1,22 +1,45 @@
 from __future__ import annotations
 
 import json
-from math import sin
+from itertools import combinations
+from math import log2
 from pathlib import Path
-from random import Random
 from typing import Any
 
 
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "body_region_map.json"
 REQUIRED_REGION_KEYS = {"id", "label", "qubitIndex"}
-DEFAULT_REGIONS = ["head", "torso", "leftArm", "rightArm", "leftLeg", "rightLeg"]
+DEFAULT_REGIONS = [
+    "head",
+    "chest",
+    "torso",
+    "oxygenTank",
+    "rightShoulder",
+    "leftShoulder",
+    "rightArm",
+    "leftArm",
+    "rightHand",
+    "leftHand",
+    "rightLeg",
+    "leftLeg",
+    "rightFoot",
+    "leftFoot",
+]
 DEFAULT_QUBIT_INDEXES = {
     "head": 0,
-    "torso": 1,
-    "leftArm": 2,
-    "rightArm": 3,
-    "leftLeg": 4,
-    "rightLeg": 5,
+    "chest": 1,
+    "torso": 2,
+    "oxygenTank": 3,
+    "rightShoulder": 4,
+    "leftShoulder": 5,
+    "rightArm": 6,
+    "leftArm": 7,
+    "rightHand": 8,
+    "leftHand": 9,
+    "rightLeg": 10,
+    "leftLeg": 11,
+    "rightFoot": 12,
+    "leftFoot": 13,
 }
 
 
@@ -90,11 +113,23 @@ def get_entanglement_pairs() -> list[tuple[str, str]]:
         region_map = load_region_map()
     except (OSError, json.JSONDecodeError, ValueError):
         return [
-            ("head", "torso"),
-            ("leftArm", "rightArm"),
-            ("leftLeg", "rightLeg"),
-            ("torso", "leftArm"),
+            ("head", "chest"),
+            ("head", "oxygenTank"),
+            ("chest", "torso"),
+            ("chest", "oxygenTank"),
+            ("chest", "rightShoulder"),
+            ("chest", "leftShoulder"),
+            ("torso", "oxygenTank"),
             ("torso", "rightLeg"),
+            ("torso", "leftLeg"),
+            ("oxygenTank", "rightShoulder"),
+            ("oxygenTank", "leftShoulder"),
+            ("rightShoulder", "rightArm"),
+            ("leftShoulder", "leftArm"),
+            ("rightArm", "rightHand"),
+            ("leftArm", "leftHand"),
+            ("rightLeg", "rightFoot"),
+            ("leftLeg", "leftFoot"),
         ]
     return [
         (link["source"], link["target"])
@@ -110,6 +145,72 @@ def _empty_state() -> dict[str, float]:
     }
 
 
+def calculate_marginals(
+    counts: dict[str, int],
+    shots: int | None = None,
+) -> dict[str, dict[str, float]]:
+    total = shots or sum(counts.values()) or 1
+    marginals: dict[str, dict[str, float]] = {}
+
+    for entry in get_region_entries():
+        region = entry["id"]
+        qubit_index = int(entry["qubitIndex"])
+        one_count = sum(
+            count
+            for bitstring, count in counts.items()
+            if bit_for_qubit(bitstring, qubit_index) == "1"
+        )
+        p1 = one_count / total
+        marginals[region] = {
+            "p0": round(1.0 - p1, 6),
+            "p1": round(p1, 6),
+            "expectationZ": round((1.0 - p1) - p1, 6),
+            "entropy": round(binary_entropy(p1), 6),
+        }
+
+    return marginals
+
+
+def calculate_correlations(
+    counts: dict[str, int],
+    shots: int | None = None,
+) -> list[dict[str, Any]]:
+    total = shots or sum(counts.values()) or 1
+    entries = get_region_entries()
+    correlations: list[dict[str, Any]] = []
+
+    for left, right in combinations(entries, 2):
+        left_region = left["id"]
+        right_region = right["id"]
+        left_index = int(left["qubitIndex"])
+        right_index = int(right["qubitIndex"])
+        joint = {
+            "00": 0.0,
+            "01": 0.0,
+            "10": 0.0,
+            "11": 0.0,
+        }
+
+        for bitstring, count in counts.items():
+            left_bit = bit_for_qubit(bitstring, left_index)
+            right_bit = bit_for_qubit(bitstring, right_index)
+            joint[f"{left_bit}{right_bit}"] += count / total
+
+        p_left_1 = joint["10"] + joint["11"]
+        p_right_1 = joint["01"] + joint["11"]
+        zz = joint["00"] + joint["11"] - joint["01"] - joint["10"]
+        correlations.append(
+            {
+                "source": left_region,
+                "target": right_region,
+                "zz": round(zz, 6),
+                "mutualInformation": round(mutual_information(joint, p_left_1, p_right_1), 6),
+            }
+        )
+
+    return correlations
+
+
 def counts_to_region_states(
     counts: dict[str, int],
     region: str,
@@ -117,48 +218,60 @@ def counts_to_region_states(
     shots: int | None = None,
     seed: int | None = None,
 ) -> dict[str, dict[str, float]]:
-    total = shots or sum(counts.values()) or 1
     normalized_intensity = max(0.0, min(float(intensity), 1.0))
+    marginals = calculate_marginals(counts, shots)
+    correlations = calculate_correlations(counts, shots)
+    max_correlation_by_region = {item: 0.0 for item in REGIONS}
+
+    for correlation in correlations:
+        strength = abs(float(correlation["zz"]))
+        max_correlation_by_region[correlation["source"]] = max(
+            max_correlation_by_region[correlation["source"]],
+            strength,
+        )
+        max_correlation_by_region[correlation["target"]] = max(
+            max_correlation_by_region[correlation["target"]],
+            strength,
+        )
+
     states = {item: _empty_state() for item in REGIONS}
-    random = Random(seed) if seed is not None else None
-
-    for bitstring, count in counts.items():
-        probability = count / total
-        reversed_bits = bitstring[::-1]
-
-        for index, body_region in enumerate(REGIONS):
-            bit = reversed_bits[index] if index < len(reversed_bits) else "0"
-            sign = 1.0 if bit == "1" else -1.0
-            prior = states[body_region]
-            prior["activation"] += probability if bit == "1" else probability * 0.2
-            prior["coherence"] += probability * (1.0 - abs(probability - 0.5))
-            prior["displacement"] += sign * probability * 0.34
-
-    selected = region if region in states else "torso"
-    for index, body_region in enumerate(REGIONS):
-        link_boost = 0.18 if body_region != selected and index % 2 == REGIONS.index(selected) % 2 else 0.0
-        direct_boost = 0.38 if body_region == selected else 0.0
-        phase = (
-            (random.random() - 0.5) * 0.1
-            if random is not None
-            else sin((index + 1) * (len(counts) + 1)) * 0.05
-        )
+    for body_region in REGIONS:
+        marginal = marginals.get(body_region, {"p1": 0.0, "expectationZ": 1.0, "entropy": 0.0})
+        activation = float(marginal["p1"]) * normalized_intensity
+        local_purity = 1.0 - float(marginal["entropy"])
         state = states[body_region]
-        state["activation"] = max(
-            0.0,
-            min(1.0, state["activation"] * normalized_intensity + direct_boost + link_boost),
-        )
-        state["coherence"] = max(0.0, min(1.0, state["coherence"] + direct_boost * 0.6))
-        state["displacement"] = max(-1.0, min(1.0, state["displacement"] + phase))
+        state["activation"] = round(max(0.0, min(1.0, activation)), 6)
+        state["coherence"] = round(max(0.0, min(1.0, max(local_purity, max_correlation_by_region[body_region]))), 6)
+        state["displacement"] = round(max(-1.0, min(1.0, float(marginal["expectationZ"]))), 6)
 
     return states
 
 
-def build_entanglement_links(region_states: dict[str, dict[str, float]]) -> list[dict[str, Any]]:
+def build_entanglement_links(
+    region_states: dict[str, dict[str, float]],
+    correlations: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     links: list[dict[str, Any]] = []
-    pairs = get_entanglement_pairs()
 
-    for source, target in pairs:
+    if correlations is not None:
+        candidate_pairs = {tuple(sorted(pair)) for pair in get_entanglement_pairs()}
+        for correlation in correlations:
+            source = correlation["source"]
+            target = correlation["target"]
+            if tuple(sorted((source, target))) not in candidate_pairs:
+                continue
+            mutual_information_value = float(correlation["mutualInformation"])
+            if mutual_information_value > 0.04:
+                links.append(
+                    {
+                        "source": source,
+                        "target": target,
+                        "strength": round(min(1.0, mutual_information_value), 4),
+                    }
+                )
+        return links
+
+    for source, target in get_entanglement_pairs():
         source_state = region_states.get(source, _empty_state())
         target_state = region_states.get(target, _empty_state())
         strength = (source_state["coherence"] + target_state["coherence"]) / 2
@@ -210,3 +323,28 @@ def bit_for_qubit(bitstring: str, qubit_index: int) -> str:
     if qubit_index < 0 or qubit_index >= len(reversed_bits):
         return "0"
     return reversed_bits[qubit_index]
+
+
+def binary_entropy(p1: float) -> float:
+    p = max(0.0, min(1.0, p1))
+    if p <= 0.0 or p >= 1.0:
+        return 0.0
+    return -p * log2(p) - (1.0 - p) * log2(1.0 - p)
+
+
+def mutual_information(joint: dict[str, float], p_left_1: float, p_right_1: float) -> float:
+    left = {"0": 1.0 - p_left_1, "1": p_left_1}
+    right = {"0": 1.0 - p_right_1, "1": p_right_1}
+    value = 0.0
+
+    for bits, probability in joint.items():
+        if probability <= 0.0:
+            continue
+        left_probability = left[bits[0]]
+        right_probability = right[bits[1]]
+        denominator = left_probability * right_probability
+        if denominator <= 0.0:
+            continue
+        value += probability * log2(probability / denominator)
+
+    return max(0.0, value)

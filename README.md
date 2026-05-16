@@ -163,6 +163,23 @@ pip install -r requirements.txt
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+Optional IonQ configuration can live in `apps/api/.env` or the repo-root `.env`. Real environment variables win over file values, and `apps/api/.env` wins over the repo-root `.env`.
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+```text
+IONQ_API_KEY=
+IONQ_BACKEND=ionq_simulator
+IONQ_SIMULATOR_BACKEND=ionq_simulator
+IONQ_QPU_BACKEND=ionq_qpu
+IONQ_ENABLE_HARDWARE=false
+IONQ_TIMEOUT_SECONDS=120
+```
+
+`aer` is always the default backend. IonQ hardware requests only submit to a QPU when `IONQ_API_KEY` is set and `IONQ_ENABLE_HARDWARE=true`; otherwise the API returns an Aer fallback payload with a `fallbackReason`.
+
 Backend URLs:
 
 - `GET http://localhost:8000/health`
@@ -170,10 +187,35 @@ Backend URLs:
 - `GET http://localhost:8000/quantum/precomputed`
 - `POST http://localhost:8000/quantum/measure`
 
+Local Aer request:
+
+```bash
+curl -X POST http://localhost:8000/quantum/measure \
+  -H "Content-Type: application/json" \
+  -d '{"region":"torso","interaction":"click","shots":128,"backend":"aer","seed":42}'
+```
+
+IonQ simulator request:
+
+```bash
+curl -X POST http://localhost:8000/quantum/measure \
+  -H "Content-Type: application/json" \
+  -d '{"region":"rightHand","interaction":"click","shots":128,"backend":"ionq_simulator"}'
+```
+
+IonQ hardware request:
+
+```bash
+IONQ_ENABLE_HARDWARE=true python -m uvicorn main:app --host 0.0.0.0 --port 8000
+curl -X POST http://localhost:8000/quantum/measure \
+  -H "Content-Type: application/json" \
+  -d '{"region":"leftFoot","interaction":"click","shots":128,"backend":"ionq_hardware"}'
+```
+
 ## Interaction Model
 
 - Hover performs a weak measurement by reading precomputed quantum samples from `/quantum/precomputed`.
-- Click performs a strong measurement by calling `/quantum/measure`, which runs a 6-qubit Qiskit Aer circuit.
+- Click performs a strong measurement by calling `/quantum/measure`, which runs a 14-qubit Qiskit Aer circuit mapped to the visible blue node graph.
 - Hold triggers global collapse in the frontend, moving all tiles from scattered positions to the sampled body surface.
 
 ## Tile Sampling

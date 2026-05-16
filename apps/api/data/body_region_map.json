@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "regions": [
     {
       "id": "head",
@@ -7,51 +7,139 @@
       "qubitIndex": 0
     },
     {
-      "id": "torso",
-      "label": "Torso",
+      "id": "chest",
+      "label": "Chest",
       "qubitIndex": 1
     },
     {
-      "id": "leftArm",
-      "label": "Left arm",
+      "id": "torso",
+      "label": "Torso",
       "qubitIndex": 2
     },
     {
-      "id": "rightArm",
-      "label": "Right arm",
+      "id": "oxygenTank",
+      "label": "Oxygen Tank",
       "qubitIndex": 3
     },
     {
-      "id": "leftLeg",
-      "label": "Left leg",
+      "id": "rightShoulder",
+      "label": "Right Shoulder",
       "qubitIndex": 4
     },
     {
-      "id": "rightLeg",
-      "label": "Right leg",
+      "id": "leftShoulder",
+      "label": "Left Shoulder",
       "qubitIndex": 5
+    },
+    {
+      "id": "rightArm",
+      "label": "Right Arm",
+      "qubitIndex": 6
+    },
+    {
+      "id": "leftArm",
+      "label": "Left Arm",
+      "qubitIndex": 7
+    },
+    {
+      "id": "rightHand",
+      "label": "Right Hand",
+      "qubitIndex": 8
+    },
+    {
+      "id": "leftHand",
+      "label": "Left Hand",
+      "qubitIndex": 9
+    },
+    {
+      "id": "rightLeg",
+      "label": "Right Leg",
+      "qubitIndex": 10
+    },
+    {
+      "id": "leftLeg",
+      "label": "Left Leg",
+      "qubitIndex": 11
+    },
+    {
+      "id": "rightFoot",
+      "label": "Right Foot",
+      "qubitIndex": 12
+    },
+    {
+      "id": "leftFoot",
+      "label": "Left Foot",
+      "qubitIndex": 13
     }
   ],
   "entanglementLinks": [
     {
       "source": "head",
+      "target": "chest"
+    },
+    {
+      "source": "head",
+      "target": "oxygenTank"
+    },
+    {
+      "source": "chest",
       "target": "torso"
     },
     {
-      "source": "leftArm",
+      "source": "chest",
+      "target": "oxygenTank"
+    },
+    {
+      "source": "chest",
+      "target": "rightShoulder"
+    },
+    {
+      "source": "chest",
+      "target": "leftShoulder"
+    },
+    {
+      "source": "torso",
+      "target": "oxygenTank"
+    },
+    {
+      "source": "torso",
+      "target": "rightLeg"
+    },
+    {
+      "source": "torso",
+      "target": "leftLeg"
+    },
+    {
+      "source": "oxygenTank",
+      "target": "rightShoulder"
+    },
+    {
+      "source": "oxygenTank",
+      "target": "leftShoulder"
+    },
+    {
+      "source": "rightShoulder",
       "target": "rightArm"
     },
     {
-      "source": "leftLeg",
-      "target": "rightLeg"
-    },
-    {
-      "source": "torso",
+      "source": "leftShoulder",
       "target": "leftArm"
     },
     {
-      "source": "torso",
-      "target": "rightLeg"
+      "source": "rightArm",
+      "target": "rightHand"
+    },
+    {
+      "source": "leftArm",
+      "target": "leftHand"
+    },
+    {
+      "source": "rightLeg",
+      "target": "rightFoot"
+    },
+    {
+      "source": "leftLeg",
+      "target": "leftFoot"
     }
   ]
 }

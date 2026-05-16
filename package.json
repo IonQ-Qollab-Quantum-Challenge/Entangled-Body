@@ -5,15 +5,16 @@
   "description": "Entangled Body monorepo bootstrap",
   "scripts": {
     "setup": "bash ./scripts/setup.sh",
-    "build": "next build apps/web",
-    "dev": "next dev apps/web -p 3000",
-    "web:dev": "next dev apps/web -p 3000",
+    "build": "cd apps/web && next build",
+    "dev": "cd apps/web && next dev -p 3000",
+    "web:dev": "cd apps/web && next dev -p 3000",
     "api:dev": "bash ./scripts/dev.sh",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.0",
     "@types/three": "^0.176.0",
+    "codex": "^0.2.3",
     "next": "^15.3.1",
     "node": "^24.15.0",
     "react": "^19.1.0",

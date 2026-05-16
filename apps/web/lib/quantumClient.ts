@@ -1,9 +1,10 @@
 import type { BodyRegion, QuantumNodeState, RegionState } from "./bodyRegions";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
-const REQUEST_TIMEOUT_MS = 10000;
+const REQUEST_TIMEOUT_MS = 60000;
 
 export type QuantumInteraction = "hover" | "click" | "hold";
+export type QuantumBackend = "aer" | "ionq_simulator" | "ionq_hardware";
 
 export type QuantumClientState = {
   loading: boolean;
@@ -11,8 +12,18 @@ export type QuantumClientState = {
 };
 
 export type QuantumMeasurementPayload = {
+  backend?: string;
+  requestedBackend?: QuantumBackend;
+  provider?: string;
+  hardware?: boolean;
+  jobId?: string | null;
+  jobStatus?: string | null;
+  circuitType?: string;
+  analysisVersion?: number;
   counts?: Record<string, number>;
   probabilities?: Record<string, number>;
+  marginals?: Partial<Record<BodyRegion, { p0: number; p1: number; expectationZ: number; entropy: number }>>;
+  correlations?: Array<{ source: BodyRegion; target: BodyRegion; zz: number; mutualInformation: number }>;
   dominantBitstring?: string;
   shots?: number;
   qubits?: number;
@@ -42,7 +53,7 @@ export async function measure(
   region: BodyRegion,
   intensity = 1,
   shots = 1024,
-  options: { interaction?: QuantumInteraction; seed?: number } = {},
+  options: { interaction?: QuantumInteraction; backend?: QuantumBackend; seed?: number } = {},
 ): Promise<unknown> {
   const safeIntensity = clamp(intensity, 0, 1);
   const safeShots = Math.round(clamp(shots, 1, 8192));
@@ -50,7 +61,7 @@ export async function measure(
   return requestJson(`${API_BASE}/quantum/measure`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, seed: safeSeed }),
+    body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, backend: options.backend ?? "aer", seed: safeSeed }),
   });
 }
 

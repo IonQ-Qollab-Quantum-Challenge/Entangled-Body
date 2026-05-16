@@ -21,10 +21,22 @@ def _region_qubit(region: str) -> int:
     return REGION_QUBITS.get(region, REGION_QUBITS["torso"])
 
 
-def _entangle_body(circuit: QuantumCircuit) -> None:
-    circuit.h(range(QUBIT_COUNT))
+def circuit_type_for_interaction(interaction: str) -> str:
+    if interaction == "click":
+        return "bell_pair"
+    if interaction == "hold":
+        return "ghz_body"
+    return "local_probe"
+
+
+def _linked_regions(region: str) -> list[str]:
+    linked: list[str] = []
     for source, target in get_entanglement_pairs():
-        circuit.cx(_region_qubit(source), _region_qubit(target))
+        if source == region:
+            linked.append(target)
+        elif target == region:
+            linked.append(source)
+    return linked
 
 
 def build_hover_circuit(region: str, intensity: float = 1.0) -> QuantumCircuit:
@@ -32,35 +44,35 @@ def build_hover_circuit(region: str, intensity: float = 1.0) -> QuantumCircuit:
     normalized = _normalize_intensity(intensity)
 
     circuit = QuantumCircuit(QUBIT_COUNT, QUBIT_COUNT)
-    _entangle_body(circuit)
-    circuit.ry(normalized * pi / 5, selected)
+    circuit.h(selected)
+    for target_region in _linked_regions(region):
+        circuit.cx(selected, _region_qubit(target_region))
+    circuit.ry(normalized * pi / 6, selected)
     circuit.measure(range(QUBIT_COUNT), range(QUBIT_COUNT))
     return circuit
 
 
 def build_click_circuit(region: str) -> QuantumCircuit:
     selected = _region_qubit(region)
+    target_region = next(iter(_linked_regions(region)), "torso")
+    target = _region_qubit(target_region)
+    if target == selected:
+        target = 0 if selected != 0 else 1
 
     circuit = QuantumCircuit(QUBIT_COUNT, QUBIT_COUNT)
-    _entangle_body(circuit)
-    circuit.x(selected)
-    circuit.rz(pi / 3, selected)
-    for source, target in get_entanglement_pairs():
-        if source == region:
-            circuit.cx(selected, _region_qubit(target))
-        elif target == region:
-            circuit.cx(selected, _region_qubit(source))
+    circuit.h(selected)
+    circuit.cx(selected, target)
     circuit.measure(range(QUBIT_COUNT), range(QUBIT_COUNT))
     return circuit
 
 
 def build_hold_circuit() -> QuantumCircuit:
     circuit = QuantumCircuit(QUBIT_COUNT, QUBIT_COUNT)
-    _entangle_body(circuit)
-    for index in range(QUBIT_COUNT):
-        circuit.ry((index + 1) * pi / 16, index)
-    for index in range(QUBIT_COUNT - 1):
-        circuit.cx(index, index + 1)
+    source = _region_qubit("torso")
+    circuit.h(source)
+    for target in range(QUBIT_COUNT):
+        if target != source:
+            circuit.cx(source, target)
     circuit.measure(range(QUBIT_COUNT), range(QUBIT_COUNT))
     return circuit
 

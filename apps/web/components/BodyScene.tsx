@@ -191,7 +191,7 @@ export function BodyScene() {
       setStableProgress(0);
       setInspectedNode({
         index: nodeIndex,
-        qubitIndex: nodeIndex % 6,
+        qubitIndex: nodeIndex,
         region,
         point: point ?? hoveredPoint ?? [0, 0, 0],
       });
