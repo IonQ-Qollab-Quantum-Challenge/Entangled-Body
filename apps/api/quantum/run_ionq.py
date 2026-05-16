@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from typing import Any
 
-from dotenv import dotenv_values
-
+from config.env import load_env_files
 from quantum.circuits import build_measurement_circuit
 from quantum.run_simulator import build_counts_payload, run_aer_measurement
 
@@ -20,24 +18,7 @@ DEFAULT_SIMULATOR_BACKEND = "ionq_simulator"
 DEFAULT_QPU_BACKEND = "ionq_qpu"
 DEFAULT_TIMEOUT_SECONDS = 120
 
-_INITIAL_ENV = set(os.environ)
-
-
-def load_quantum_env() -> None:
-    """Load repo and API .env files without overriding real environment values."""
-
-    api_dir = Path(__file__).resolve().parents[1]
-    repo_root = api_dir.parents[1]
-    for env_path in (repo_root / ".env", api_dir / ".env"):
-        if not env_path.exists():
-            continue
-        for key, value in dotenv_values(env_path).items():
-            if value is None or key in _INITIAL_ENV:
-                continue
-            os.environ[key] = value
-
-
-load_quantum_env()
+load_env_files()
 
 
 def ionq_is_configured() -> bool:

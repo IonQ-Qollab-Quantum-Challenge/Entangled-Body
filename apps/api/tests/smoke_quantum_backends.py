@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from config.env import load_env_files  # noqa: E402
 from routes.quantum import MeasurementRequest, measure_region, quantum_health  # noqa: E402
 
 
@@ -79,6 +81,33 @@ class QuantumBackendSmokeTests(unittest.TestCase):
         self.assertTrue(health["ionq_configured"])
         self.assertNotIn("secret-value", repr(health))
         self.assertIn("ionq_hardware_enabled", health)
+
+    def test_load_env_files_reads_local_env_when_env_is_missing_or_empty(self) -> None:
+        original_key = os.environ.get("IONQ_API_KEY")
+        original_backend = os.environ.get("IONQ_BACKEND")
+        try:
+            os.environ["IONQ_API_KEY"] = ""
+            os.environ["IONQ_BACKEND"] = "real-env-backend"
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                env_path = Path(tmp_dir) / ".env"
+                env_path.write_text(
+                    "IONQ_API_KEY=local-test-key\nIONQ_BACKEND=local-backend\n",
+                    encoding="utf-8",
+                )
+
+                load_env_files((env_path,))
+
+            self.assertEqual(os.environ["IONQ_API_KEY"], "local-test-key")
+            self.assertEqual(os.environ["IONQ_BACKEND"], "real-env-backend")
+        finally:
+            if original_key is None:
+                os.environ.pop("IONQ_API_KEY", None)
+            else:
+                os.environ["IONQ_API_KEY"] = original_key
+            if original_backend is None:
+                os.environ.pop("IONQ_BACKEND", None)
+            else:
+                os.environ["IONQ_BACKEND"] = original_backend
 
 
 class IonQHardwareIntegrationTests(unittest.TestCase):
