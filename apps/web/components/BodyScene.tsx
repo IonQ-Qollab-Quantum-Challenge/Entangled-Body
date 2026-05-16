@@ -15,7 +15,8 @@ import { QuantumNodeDashboard } from "./QuantumNodeDashboard";
 import { SpaceEnvironment } from "./SpaceEnvironment";
 
 const MODEL_URL = "/models/astronaut_rigged_and_animated.glb";
-
+const UI_SCALE_BASE_WIDTH = 1440;
+const UI_SCALE_BASE_HEIGHT = 900;
 type AppMode = "inspect" | "measurement";
 
 type InspectedNode = {
@@ -28,7 +29,6 @@ type InspectedNode = {
 export function BodyScene() {
   const [mode, setMode] = useState<"superposition" | "collapse">("superposition");
   const [appMode, setAppMode] = useState<AppMode>("inspect");
-  const [measurementDashboardVisible, setMeasurementDashboardVisible] = useState(false);
   const [collapseProgress, setCollapseProgress] = useState(0);
   const [quantumState, setQuantumState] = useState<BodyQuantumState>({
     regionStates: emptyRegionStates(),
@@ -50,6 +50,7 @@ export function BodyScene() {
   const [connectionBreakPoint, setConnectionBreakPoint] = useState<Vector3Tuple | null>(null);
   const [connectionBreakProgress, setConnectionBreakProgress] = useState(0);
   const [inspectedNode, setInspectedNode] = useState<InspectedNode | null>(null);
+  const [uiScale, setUiScale] = useState(1);
   const precomputedCache = useRef(new Map<BodyRegion, BodyQuantumState>());
   const lastHoverRegion = useRef<BodyRegion | null>(null);
   const collapseFrame = useRef<number | null>(null);
@@ -65,6 +66,17 @@ export function BodyScene() {
       if (stableReturnFrame.current !== null) cancelAnimationFrame(stableReturnFrame.current);
       if (stableReturnTimeout.current !== null) window.clearTimeout(stableReturnTimeout.current);
     };
+  }, []);
+
+  useEffect(() => {
+    const updateUiScale = () => {
+      const nextScale = Math.min(1, window.innerWidth / UI_SCALE_BASE_WIDTH, window.innerHeight / UI_SCALE_BASE_HEIGHT);
+      setUiScale(Math.max(0.62, nextScale));
+    };
+
+    updateUiScale();
+    window.addEventListener("resize", updateUiScale);
+    return () => window.removeEventListener("resize", updateUiScale);
   }, []);
 
   const startConnectionBreakAnimation = useCallback((point?: Vector3Tuple) => {
@@ -281,15 +293,6 @@ export function BodyScene() {
   }, [toggleMusicMuted]);
 
   const switchAppMode = useCallback((nextMode: AppMode) => {
-    if (nextMode === "measurement") {
-      if (appMode === "measurement") {
-        setMeasurementDashboardVisible((visible) => !visible);
-        return;
-      }
-
-      setMeasurementDashboardVisible(true);
-    }
-
     setAppMode(nextMode);
     setError(null);
     setInspectedNode(null);
@@ -306,10 +309,10 @@ export function BodyScene() {
       setConnectionBreakPoint(null);
       setConnectionBreakProgress(0);
     }
-  }, [appMode]);
+  }, []);
 
   return (
-    <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
+    <main className="scene-root">
       <Canvas camera={{ position: [0, 0.2, 5.35], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true }}>
         <color attach="background" args={["#07090d"]} />
         <ambientLight intensity={0.78} />
@@ -337,38 +340,42 @@ export function BodyScene() {
         </group>
         <CameraControls />
       </Canvas>
-      <div className="scene-mode-switch" aria-label="Interaction mode">
-        <button type="button" className={appMode === "inspect" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("inspect")}>
-          Inspect
-        </button>
-        <button type="button" className={appMode === "measurement" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("measurement")}>
-          Measurement
+      <div className="scene-left-controls" style={{ transform: `scale(${uiScale})` }}>
+        <div className="scene-mode-switch" aria-label="Interaction mode">
+          <button type="button" className={appMode === "inspect" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("inspect")}>
+            Inspect
+          </button>
+          <button type="button" className={appMode === "measurement" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("measurement")}>
+            Measurement
+          </button>
+        </div>
+        <button
+          type="button"
+          className={!musicMuted ? "music-toggle music-toggle--playing" : "music-toggle"}
+          onClick={toggleMusicMuted}
+          aria-label={musicMuted ? "Unmute background music" : "Mute background music"}
+          aria-pressed={musicMuted}
+          title={musicMuted ? "Unmute background music (M)" : "Mute background music (M)"}
+        >
+          <span className="music-toggle__icon" aria-hidden="true" />
         </button>
       </div>
-      <button
-        type="button"
-        className={!musicMuted ? "music-toggle music-toggle--playing" : "music-toggle"}
-        onClick={toggleMusicMuted}
-        aria-label={musicMuted ? "Unmute background music" : "Mute background music"}
-        aria-pressed={musicMuted}
-        title={musicMuted ? "Unmute background music (M)" : "Mute background music (M)"}
-      >
-        <span className="music-toggle__icon" aria-hidden="true" />
-      </button>
       <LoadingIntro modelReady={modelReady} onComplete={handleIntroComplete} onExitStart={handleIntroExitStart} visible={!introComplete} />
       <BackgroundMusic playing={musicPlaying} muted={musicMuted} onPlayingChange={setMusicPlaying} />
       {error ? <div className="scene-status" role="status" aria-live="polite">{error}</div> : null}
-      <QuantumNodeDashboard
-        latestMeasurement={latestMeasurement}
-        appMode={appMode}
-        visible={appMode !== "measurement" || measurementDashboardVisible}
-        mode={mode}
-        collapseProgress={collapseProgress}
-        stableProgress={stableProgress}
-        modelStable={modelStable}
-        loading={loading}
-        inspectedNode={inspectedNode}
-      />
+      <div className="scene-dashboard-shell" style={{ transform: `scale(${uiScale})` }}>
+        <QuantumNodeDashboard
+          latestMeasurement={latestMeasurement}
+          appMode={appMode}
+          visible
+          mode={mode}
+          collapseProgress={collapseProgress}
+          stableProgress={stableProgress}
+          modelStable={modelStable}
+          loading={loading}
+          inspectedNode={inspectedNode}
+        />
+      </div>
     </main>
   );
 }

@@ -81,5 +81,33 @@ class QuantumBackendSmokeTests(unittest.TestCase):
         self.assertIn("ionq_hardware_enabled", health)
 
 
+class IonQHardwareIntegrationTests(unittest.TestCase):
+    def test_real_ionq_hardware_execution_when_explicitly_enabled(self) -> None:
+        if os.environ.get("RUN_IONQ_HARDWARE_TEST", "").lower() not in {"1", "true", "yes", "on"}:
+            self.skipTest("Set RUN_IONQ_HARDWARE_TEST=true to submit a real IonQ QPU job.")
+        if not os.environ.get("IONQ_API_KEY"):
+            self.skipTest("IONQ_API_KEY is required for real IonQ QPU execution.")
+        if os.environ.get("IONQ_ENABLE_HARDWARE", "").lower() not in {"1", "true", "yes", "on"}:
+            self.skipTest("Set IONQ_ENABLE_HARDWARE=true to allow real IonQ QPU execution.")
+
+        response = measure_region(
+            MeasurementRequest(
+                region="torso",
+                interaction="click",
+                shots=16,
+                backend="ionq_hardware",
+            ),
+        )
+
+        self.assertTrue(REQUIRED_RESPONSE_KEYS.issubset(response))
+        self.assertEqual(response["requestedBackend"], "ionq_hardware")
+        self.assertEqual(response["provider"], "ionq")
+        self.assertTrue(response["hardware"])
+        self.assertNotEqual(response.get("source"), "fallback")
+        self.assertNotIn("fallbackReason", response)
+        self.assertTrue(response.get("jobId"))
+        self.assertTrue(response["counts"])
+
+
 if __name__ == "__main__":
     unittest.main()
