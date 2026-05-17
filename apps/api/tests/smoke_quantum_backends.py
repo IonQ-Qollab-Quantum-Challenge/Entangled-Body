@@ -127,6 +127,9 @@ class IonQHardwareIntegrationTests(unittest.TestCase):
                 backend="ionq_hardware",
             ),
         )
+        print(response)
+        print("fallbackReason =", response.get("fallbackReason"))
+        
 
         self.assertTrue(REQUIRED_RESPONSE_KEYS.issubset(response))
         self.assertEqual(response["requestedBackend"], "ionq_hardware")
