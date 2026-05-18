@@ -9,22 +9,31 @@ Entangled Body is a separated frontend/backend prototype for rendering a GLB bod
 - `apps/api/data/precomputed_samples.json`: weak measurement samples used by hover interactions.
 - `apps/web/public/models/astronaut_rigged_and_animated.glb`: source model sampled into render tiles.
 
-## AWS Deployment Architecture
+## Live Demo
 
-The README architecture is written around the **initial deployment target**. The expanded ECS architecture is documented as a later scaling path, not as the first version to run continuously. This keeps the project cost-aware while still leaving room for deeper AWS deployment work after the creative quantum experience is stable.
+```text
+https://entangledbody.com
+```
 
-### Initial Deployment Target
+API health check:
 
-The first AWS deployment uses S3 and CloudFront for the frontend, plus one managed container service for the FastAPI quantum backend. This is the recommended starting point for the challenge-ready live version because it is inexpensive, understandable, and keeps the focus on the quantum creative interaction.
+```text
+https://entangledbody.com/api/health
+```
+
+## Deployment
+
+The live demo is deployed on AWS with a small production-style setup: S3 and CloudFront serve the static frontend, CloudFront forwards `/api/*` requests to the FastAPI backend on App Runner, and Route 53/ACM provide the custom HTTPS domain.
 
 ```mermaid
 flowchart LR
-    user[User / qoollab domain]
+    user[User / entangledbody.com]
     dns[Route 53]
     cert[ACM HTTPS certificate]
     cf[CloudFront CDN]
     s3web[S3 static frontend]
-    api[App Runner or ECS Fargate<br/>FastAPI + Qiskit]
+    ecr[ECR API image]
+    api[App Runner<br/>FastAPI + Qiskit]
     logs[CloudWatch Logs]
 
     user --> dns
@@ -32,109 +41,13 @@ flowchart LR
     cert --> cf
     cf --> s3web
     cf -->|/api/*| api
+    ecr --> api
     api --> logs
 ```
 
-- Host the Next.js static frontend in S3 and serve it through CloudFront.
-- Restrict the S3 origin with CloudFront Origin Access Control, so users cannot bypass CloudFront and read the bucket directly.
-- Use Route 53 and ACM for the custom HTTPS domain.
-- Deploy the FastAPI backend from the existing Docker image.
-- Prefer App Runner for the first backend deployment if simplicity and cost control matter more than showing ECS internals.
-- Use a single ECS Fargate service as the alternative if the deployment needs to demonstrate ECS directly.
-- Use CloudWatch Logs with a short retention period.
-- Add an AWS Budget or billing alarm before leaving the service running.
-
-### Deployment Flow
-
-```mermaid
-flowchart LR
-    dev[Developer push]
-    gha[GitHub Actions]
-    webbuild[Build static frontend]
-    s3deploy[Upload to S3]
-    invalidate[Invalidate CloudFront cache]
-    image[Build API image]
-    backend[Deploy App Runner or ECS service]
-
-    dev --> gha
-    gha --> webbuild --> s3deploy --> invalidate
-    gha --> image --> backend
-```
-
-- Frontend CI builds the static site, syncs the output to S3, and invalidates CloudFront.
-- Backend CI builds the FastAPI container and deploys it to App Runner or ECS.
-- Environment-specific values such as API base URL, AWS account ID, and service names should be stored as GitHub Actions secrets or environment variables.
-- If S3 static hosting is used, the Next.js app must remain compatible with static export constraints.
-
-### Expansion Target
-
-After the first deployment is stable, the architecture can be expanded if Entangled Body needs more control over backend routing, container operations, observability, or infrastructure automation:
-
-```mermaid
-flowchart LR
-    user[User / qoollab domain]
-    r53[Route 53 + ACM]
-    cf[CloudFront]
-    s3web[S3 static frontend]
-    alb[Application Load Balancer]
-    ecs[ECS Fargate service<br/>FastAPI + Qiskit]
-    ecr[ECR container registry]
-    s3data[S3 precomputed quantum data]
-    gha[GitHub Actions CI/CD]
-    cw[CloudWatch Logs + Alarms]
-    iac[Terraform or CDK]
-
-    user --> r53 --> cf
-    cf --> s3web
-    cf -->|/api/*| alb --> ecs
-    gha --> ecr --> ecs
-    ecs --> s3data
-    ecs --> cw
-    iac -.provisions.-> r53
-    iac -.provisions.-> cf
-    iac -.provisions.-> s3web
-    iac -.provisions.-> alb
-    iac -.provisions.-> ecs
-    iac -.provisions.-> ecr
-    iac -.provisions.-> cw
-```
-
-This version gives more operational control, but it is not the recommended always-on first deployment because ALB, ECS, networking, and observability resources increase cost and operational surface area.
-
-### Cost Controls
-
-- Avoid a NAT Gateway for the first ECS version by running the Fargate task in a public subnet with a public IP.
-- Keep the Fargate desired task count at `1` for a challenge/demo deployment.
-- Use small CPU and memory values first, then tune only if Qiskit workloads need more.
-- Consider App Runner instead of ALB + ECS when the project does not need VPC-level control.
-- Keep CloudWatch log retention short, such as 3-7 days.
-- Use AWS Budgets or billing alarms before enabling always-on resources.
-- Tear down or scale down ALB/ECS resources when they are only needed for a demo.
-
-### Monitoring
-
-- Use `/health` and `/quantum/health` as backend health check endpoints.
-- Send backend container logs to CloudWatch Logs.
-- Add alarms for service errors, unhealthy backend responses, and unexpected monthly spend.
-- Start with minimal metrics and alarms, then expand once the service is receiving real traffic.
-
-### Tradeoffs
-
-- **Why S3 + CloudFront instead of Amplify Hosting:** the main goal is to present Entangled Body as a fast, reliable web-based quantum creative experience. S3 and CloudFront keep the visual frontend lightweight, cacheable, and easy to serve globally while still leaving the deployment path transparent.
-- **Why App Runner first:** the backend exists to support the interaction between the browser, FastAPI, Qiskit, and future IonQ execution. App Runner keeps the first live version focused on the creative quantum experience instead of early networking complexity.
-- **Why ECS Fargate later:** ECS Fargate is an expansion path if the project needs more control over container runtime, routing, observability, or infrastructure-as-code. It is not required for the first challenge-ready version.
-- **Why no NAT Gateway in the small ECS version:** if ECS is used for a demo deployment, avoiding a NAT Gateway keeps fixed cloud cost low. The infrastructure should support the artwork and quantum interaction, not become the center of the project.
 - **Why precomputed quantum data exists:** precomputed samples keep hover interactions fast and predictable, reduce backend compute load, and preserve the interactive rhythm of the piece while live quantum or simulator calls remain available for stronger measurement events.
 
-### Infrastructure Roadmap
-
-1. Document the target architecture and cost controls in this README.
-2. Make the frontend compatible with S3 static deployment.
-3. Deploy the frontend to S3 behind CloudFront with OAC.
-4. Deploy the FastAPI backend to App Runner or one small ECS Fargate service.
-5. Add GitHub Actions for frontend and backend deployment.
-6. Add Route 53, ACM, CloudWatch logs, and budget alarms.
-7. Expand to ALB + ECS Fargate + ECR + Terraform/CDK only if the project needs more operational control or a stronger AWS implementation story.
+Detailed Terraform variables, manual deployment commands, custom domain notes, redeployment steps, and planned CI/CD improvements live in [infra/terraform/README.md](infra/terraform/README.md).
 
 ## Run the Frontend
 
@@ -189,12 +102,6 @@ The backend simulator returns counts and the dominant bitstring. `quantum/mapper
 - `displacement`: a signed visual offset for measurement response.
 
 The frontend `mapQuantumToBody.ts` normalizes that JSON into body region state and entanglement links for the tile renderer.
-
-## Docker
-
-```bash
-docker compose up --build
-```
 
 ## Music Credit
 
