@@ -139,7 +139,7 @@ This version gives more operational control, but it is not the recommended alway
 ## Run the Frontend
 
 ```bash
-npm install
+npm run setup
 npm run dev
 ```
 
@@ -158,9 +158,8 @@ NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
 ## Run the Backend
 
 ```bash
-cd apps/api
-pip install -r requirements.txt
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+npm run setup
+npm run api:dev
 ```
 
 Optional IonQ configuration can live in `apps/api/.env` or the repo-root `.env`. Real environment variables win over file values, and `apps/api/.env` wins over the repo-root `.env`.

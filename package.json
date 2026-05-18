@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "description": "Entangled Body monorepo bootstrap",
   "scripts": {
-    "setup": "bash ./scripts/setup.sh",
-    "build": "cd apps/web && next build",
-    "dev": "bash ./scripts/dev.sh",
-    "web:dev": "cd apps/web && next dev -p 3000",
-    "api:dev": "bash ./scripts/api-dev.sh",
+    "setup": "node ./scripts/setup.mjs",
+    "build": "node ./scripts/web-build.mjs",
+    "dev": "node ./scripts/dev.mjs",
+    "web:dev": "node ./scripts/web-dev.mjs",
+    "api:dev": "node ./scripts/api-dev.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
