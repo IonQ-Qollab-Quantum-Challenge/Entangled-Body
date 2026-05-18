@@ -6,7 +6,7 @@ import type { Vector3Tuple } from "three";
 
 import { emptyRegionStates, type BodyQuantumState, type BodyRegion } from "../lib/bodyRegions";
 import { mapQuantumToBody } from "../lib/mapQuantumToBody";
-import { getPrecomputed, measure, type QuantumBackend, type QuantumMeasurementPayload } from "../lib/quantumClient";
+import { measure, type QuantumBackend, type QuantumMeasurementPayload } from "../lib/quantumClient";
 import { BackgroundMusic } from "./BackgroundMusic";
 import { CameraControls } from "./CameraControls";
 import { LoadingIntro } from "./LoadingIntro";
@@ -52,7 +52,6 @@ export function BodyScene() {
   const [connectionBreakProgress, setConnectionBreakProgress] = useState(0);
   const [inspectedNode, setInspectedNode] = useState<InspectedNode | null>(null);
   const [uiScale, setUiScale] = useState(1);
-  const precomputedCache = useRef(new Map<BodyRegion, BodyQuantumState>());
   const lastHoverRegion = useRef<BodyRegion | null>(null);
   const collapseFrame = useRef<number | null>(null);
   const connectionBreakFrame = useRef<number | null>(null);
@@ -99,7 +98,7 @@ export function BodyScene() {
     connectionBreakFrame.current = requestAnimationFrame(tick);
   }, [hoveredPoint]);
 
-  const startCollapseAnimation = useCallback((point?: Vector3Tuple) => {
+  const startCollapseAnimation = useCallback((point?: Vector3Tuple, onReturnComplete?: () => void) => {
     if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
     if (stableReturnFrame.current !== null) {
       cancelAnimationFrame(stableReturnFrame.current);
@@ -146,6 +145,7 @@ export function BodyScene() {
               setStableProgress(0);
               setConnectionBreakPoint(null);
               setConnectionBreakProgress(0);
+              onReturnComplete?.();
             }
           };
 
@@ -177,21 +177,18 @@ export function BodyScene() {
     if (lastHoverRegion.current === region) return;
     lastHoverRegion.current = region;
 
-    const cached = precomputedCache.current.get(region);
-    if (cached) {
-      setQuantumState(cached);
-      return;
-    }
-
     try {
       setError(null);
-      const mapped = mapQuantumToBody(await getPrecomputed(region));
-      precomputedCache.current.set(region, mapped);
+      const mapped = mapQuantumToBody(await measure(region, 0.45, 1, {
+        interaction: "hover",
+        backend: quantumBackend,
+        seed: Date.now() % 1000000,
+      }));
       setQuantumState(mapped);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Precomputed quantum request failed.");
+      setError(requestError instanceof Error ? requestError.message : "Weak quantum measurement failed.");
     }
-  }, [appMode, modelStable]);
+  }, [appMode, modelStable, quantumBackend]);
 
   const inspectQuantumNode = useCallback(async (region: BodyRegion, point?: Vector3Tuple, nodeIndex = 0) => {
     if (loading) return;
@@ -212,7 +209,7 @@ export function BodyScene() {
         region,
         point: point ?? hoveredPoint ?? [0, 0, 0],
       });
-      const payload = await measure(region, 0.45, 512, { interaction: "hover", backend: quantumBackend });
+      const payload = await measure(region, 0.45, 1, { interaction: "hover", backend: quantumBackend });
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
@@ -223,18 +220,41 @@ export function BodyScene() {
     }
   }, [hoveredPoint, loading, quantumBackend]);
 
+  const regenerateEntangledState = useCallback(async (region: BodyRegion) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const payload = await measure(region, 0.45, 1, {
+        interaction: "hover",
+        backend: quantumBackend,
+        seed: Date.now() % 1000000,
+      });
+      const mapped = mapQuantumToBody(payload);
+      setLatestMeasurement(payload as QuantumMeasurementPayload);
+      setQuantumState(mapped);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Entangled quantum refresh failed.");
+    } finally {
+      setLoading(false);
+    }
+  }, [quantumBackend]);
+
   const triggerGlobalCollapse = useCallback(async (region?: BodyRegion, point?: Vector3Tuple) => {
     if (loading || collapseLocked) return;
+
+    const targetRegion = region ?? hoveredRegion ?? "torso";
 
     try {
       setLoading(true);
       setError(null);
       setInspectedNode(null);
-      setHoveredRegion(region ?? hoveredRegion);
+      setHoveredRegion(targetRegion);
       setHoveredPoint(point ?? hoveredPoint);
       startConnectionBreakAnimation(point);
-      startCollapseAnimation(point);
-      const payload = await measure(region ?? hoveredRegion ?? "torso", 1, 1024, { interaction: "hold", backend: quantumBackend });
+      startCollapseAnimation(point, () => {
+        void regenerateEntangledState(targetRegion);
+      });
+      const payload = await measure(targetRegion, 1, 1, { interaction: "hold", backend: quantumBackend });
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
@@ -243,7 +263,7 @@ export function BodyScene() {
     } finally {
       setLoading(false);
     }
-  }, [collapseLocked, hoveredPoint, hoveredRegion, loading, quantumBackend, startCollapseAnimation, startConnectionBreakAnimation]);
+  }, [collapseLocked, hoveredPoint, hoveredRegion, loading, quantumBackend, regenerateEntangledState, startCollapseAnimation, startConnectionBreakAnimation]);
 
   const applyStrongMeasurement = useCallback((region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => {
     if (appMode === "inspect") {

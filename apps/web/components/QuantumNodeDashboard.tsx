@@ -265,7 +265,7 @@ export function QuantumNodeDashboard({
   const [health, setHealth] = useState<QuantumHealth | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<BodyRegion>("torso");
   const [interaction, setInteraction] = useState<QuantumInteraction>("click");
-  const [shots, setShots] = useState(512);
+  const [shots] = useState(1);
   const [seed, setSeed] = useState(42);
   const [measurement, setMeasurement] = useState<QuantumMeasurementPayload | null>(null);
   const [busy, setBusy] = useState(false);
