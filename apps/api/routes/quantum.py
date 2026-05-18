@@ -26,7 +26,7 @@ MeasurementBackend = Literal["aer", "ionq_simulator", "ionq_hardware"]
 class MeasurementRequest(BaseModel):
     region: str = Field(default="torso")
     intensity: float = Field(default=1.0, ge=0.0, le=1.0)
-    shots: int = Field(default=1024, ge=1, le=8192)
+    shots: int = Field(default=1, ge=1, le=8192)
     interaction: Literal["hover", "click", "hold"] = Field(default="click")
     backend: MeasurementBackend = Field(default="ionq_simulator")
     seed: int | None = Field(default=None)

@@ -44,7 +44,7 @@ def ionq_status() -> dict[str, Any]:
 def run_ionq_measurement(
     region: str,
     intensity: float = 1.0,
-    shots: int = 1024,
+    shots: int = 1,
     interaction: str = "hover",
     requested_backend: str = "ionq_simulator",
     seed: int | None = None,

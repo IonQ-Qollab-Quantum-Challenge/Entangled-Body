@@ -35,7 +35,7 @@ def build_counts_payload(
 def run_aer_measurement(
     region: str,
     intensity: float = 1.0,
-    shots: int = 1024,
+    shots: int = 1,
     interaction: str = "hover",
     seed: int | None = None,
 ) -> dict[str, object]:

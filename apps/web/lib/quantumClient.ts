@@ -72,7 +72,7 @@ export async function getPrecomputed(region: BodyRegion): Promise<unknown> {
 export async function measure(
   region: BodyRegion,
   intensity = 1,
-  shots = 1024,
+  shots = 1,
   options: { interaction?: QuantumInteraction; backend?: QuantumBackend; seed?: number } = {},
 ): Promise<unknown> {
   const safeIntensity = clamp(intensity, 0, 1);
