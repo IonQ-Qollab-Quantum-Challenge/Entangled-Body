@@ -37,7 +37,7 @@ def ionq_status() -> dict[str, Any]:
         "ionq_qpu_backend": _qpu_backend_name(),
         "ionq_timeout_seconds": _timeout_seconds(),
         "available_backends": ["aer", "ionq_simulator", "ionq_hardware"],
-        "default_backend": "aer",
+        "default_backend": "ionq_hardware",
     }
 
 

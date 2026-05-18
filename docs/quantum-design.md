@@ -242,7 +242,8 @@ If the request falls back, the response must say so clearly.
 
 The implemented safety policy is:
 
-- `aer` never requires IonQ credentials and remains the default.
+- `ionq_hardware` is the default for live runs and requires IonQ credentials plus the hardware enable flag.
+- `aer` never requires IonQ credentials and remains available as an explicit local simulation backend.
 - `ionq_simulator` uses `qiskit-ionq` only when `IONQ_API_KEY` and the package are available; otherwise it returns an Aer fallback payload with `fallbackReason`.
 - `ionq_hardware` submits to the QPU only when `IONQ_API_KEY` is available and `IONQ_ENABLE_HARDWARE=true`; otherwise it returns an Aer fallback payload and does not call IonQ.
 - `/quantum/health` exposes configuration booleans and backend names, but never exposes the API key.
@@ -450,7 +451,7 @@ IonQ hardware execution must be opt-in.
 
 ### Phase 1: Keep Aer Scientifically Honest
 
-- Keep `aer` as the default backend.
+- Keep `ionq_hardware` as the default backend for live runs.
 - Ensure `/quantum/measure` returns counts, probabilities, marginals, correlations, `regionStates`, `nodeStates`, and `entanglementLinks`.
 - Keep visual treatment out of scientific fields.
 - Verify Bell and GHZ circuits against ideal simulator outputs.

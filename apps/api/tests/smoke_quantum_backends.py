@@ -54,6 +54,15 @@ class QuantumBackendSmokeTests(unittest.TestCase):
         self.assertFalse(response["hardware"])
         self.assertEqual(response["qubits"], 14)
 
+    def test_default_measurement_requests_ionq_hardware(self) -> None:
+        os.environ["IONQ_API_KEY"] = "test-key-not-used"
+        os.environ["IONQ_ENABLE_HARDWARE"] = "false"
+        response = measure_region(MeasurementRequest(region="torso", shots=32, seed=7))
+        self.assertTrue(REQUIRED_RESPONSE_KEYS.issubset(response))
+        self.assertEqual(response["requestedBackend"], "ionq_hardware")
+        self.assertEqual(response["source"], "fallback")
+        self.assertIn("blocked", response["fallbackReason"])
+
     def test_ionq_simulator_without_key_falls_back_to_aer_shape(self) -> None:
         response = measure_region(
             MeasurementRequest(region="rightHand", shots=32, backend="ionq_simulator"),
@@ -81,6 +90,7 @@ class QuantumBackendSmokeTests(unittest.TestCase):
         self.assertTrue(health["ionq_configured"])
         self.assertNotIn("secret-value", repr(health))
         self.assertIn("ionq_hardware_enabled", health)
+        self.assertEqual(health["default_backend"], "ionq_hardware")
 
     def test_load_env_files_reads_local_env_when_env_is_missing_or_empty(self) -> None:
         original_key = os.environ.get("IONQ_API_KEY")

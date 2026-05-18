@@ -80,11 +80,11 @@ export async function measure(
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, backend: options.backend ?? "aer", seed: safeSeed }),
+      body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, backend: options.backend ?? "ionq_hardware", seed: safeSeed }),
     },
     () => buildLocalMeasurement(region, safeIntensity, safeShots, {
       interaction: options.interaction ?? "click",
-      backend: options.backend ?? "aer",
+      backend: options.backend ?? "ionq_hardware",
       seed: safeSeed,
     }),
   );

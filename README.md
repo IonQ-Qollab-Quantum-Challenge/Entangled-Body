@@ -170,14 +170,14 @@ cp apps/api/.env.example apps/api/.env
 
 ```text
 IONQ_API_KEY=
-IONQ_BACKEND=ionq_simulator
+IONQ_BACKEND=ionq_qpu
 IONQ_SIMULATOR_BACKEND=ionq_simulator
 IONQ_QPU_BACKEND=ionq_qpu
 IONQ_ENABLE_HARDWARE=false
 IONQ_TIMEOUT_SECONDS=120
 ```
 
-`aer` is always the default backend. IonQ hardware requests only submit to a QPU when `IONQ_API_KEY` is set and `IONQ_ENABLE_HARDWARE=true`; otherwise the API returns an Aer fallback payload with a `fallbackReason`.
+`ionq_hardware` is the default backend for live runs. It only submits to a QPU when `IONQ_API_KEY` is set and `IONQ_ENABLE_HARDWARE=true`; otherwise the API returns an Aer fallback payload with a `fallbackReason`. Select `aer` explicitly when you want local-only simulation.
 
 IonQ backend smoke tests can be run with pytest by passing the test file directly:
 
