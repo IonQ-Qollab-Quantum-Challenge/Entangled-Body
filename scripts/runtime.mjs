@@ -33,6 +33,7 @@ export function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: rootDir,
     stdio: "inherit",
+    shell: shouldUseShell(command),
     ...options,
   });
 
@@ -50,6 +51,7 @@ export function spawnForeground(command, args, options = {}) {
   const child = spawn(command, args, {
     cwd: rootDir,
     stdio: "inherit",
+    shell: shouldUseShell(command),
     ...options,
   });
 
@@ -59,6 +61,10 @@ export function spawnForeground(command, args, options = {}) {
   });
 
   return child;
+}
+
+function shouldUseShell(command) {
+  return isWindows && /\.(cmd|bat)$/i.test(command);
 }
 
 export function detectPython() {
