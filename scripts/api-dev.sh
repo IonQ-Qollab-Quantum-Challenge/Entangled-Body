@@ -5,23 +5,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV_DIR="$ROOT_DIR/.venv"
 
 if [ ! -d "$VENV_DIR" ]; then
-  echo "[dev] Missing virtualenv. Run ./scripts/setup.sh first." >&2
+  echo "[api-dev] Missing virtualenv. Run ./scripts/setup.sh first." >&2
   exit 1
 fi
 
 # shellcheck source=/dev/null
 source "$VENV_DIR/bin/activate"
 
-cleanup() {
-  jobs -pr | xargs -r kill
-}
-
-trap cleanup EXIT INT TERM
-
 cd "$ROOT_DIR/apps/api"
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
-
-cd "$ROOT_DIR/apps/web"
-next dev -p 3000 &
-
-wait -n
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload

@@ -6,9 +6,9 @@
   "scripts": {
     "setup": "bash ./scripts/setup.sh",
     "build": "cd apps/web && next build",
-    "dev": "cd apps/web && next dev -p 3000",
+    "dev": "bash ./scripts/dev.sh",
     "web:dev": "cd apps/web && next dev -p 3000",
-    "api:dev": "bash ./scripts/dev.sh",
+    "api:dev": "bash ./scripts/api-dev.sh",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
