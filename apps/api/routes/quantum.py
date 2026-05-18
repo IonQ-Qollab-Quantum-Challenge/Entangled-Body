@@ -7,19 +7,28 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from quantum.mapper import REGIONS, build_entanglement_links, counts_to_node_states, counts_to_region_states
+from quantum.mapper import (
+    REGIONS,
+    build_entanglement_links,
+    calculate_correlations,
+    calculate_marginals,
+    counts_to_node_states,
+    counts_to_region_states,
+)
 from quantum.run_simulator import run_aer_measurement
-from quantum.run_ionq import ionq_is_configured
+from quantum.run_ionq import ionq_status, run_ionq_measurement
 
 router = APIRouter(prefix="/quantum", tags=["quantum"])
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "precomputed_samples.json"
+MeasurementBackend = Literal["aer", "ionq_simulator", "ionq_hardware"]
 
 
 class MeasurementRequest(BaseModel):
     region: str = Field(default="torso")
     intensity: float = Field(default=1.0, ge=0.0, le=1.0)
     shots: int = Field(default=1024, ge=1, le=8192)
-    interaction: Literal["hover", "click", "hold"] = Field(default="hover")
+    interaction: Literal["hover", "click", "hold"] = Field(default="click")
+    backend: MeasurementBackend = Field(default="ionq_simulator")
     seed: int | None = Field(default=None)
 
     @field_validator("region")
@@ -33,10 +42,18 @@ class MeasurementRequest(BaseModel):
 
 @router.get("/health")
 def quantum_health() -> dict:
+    status = ionq_status()
+    default_backend = status["default_backend"]
+    if default_backend == "ionq_hardware":
+        mode = "live" if status["ionq_configured"] and status["ionq_hardware_enabled"] else "simulator"
+    elif default_backend == "ionq_simulator":
+        mode = "ionq_simulator" if status["ionq_configured"] else "simulator"
+    else:
+        mode = "simulator"
     return {
         "ok": True,
-        "mode": "simulator",
-        "ionq_configured": ionq_is_configured(),
+        "mode": mode,
+        **status,
     }
 
 
@@ -66,16 +83,32 @@ def get_precomputed_sample() -> dict:
 
 @router.post("/measure")
 def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
-    measurement = run_aer_measurement(
-        region=payload.region,
-        intensity=payload.intensity,
-        shots=payload.shots,
-        interaction=payload.interaction,
-    )
+    if payload.backend == "aer":
+        measurement = {
+            **run_aer_measurement(
+                region=payload.region,
+                intensity=payload.intensity,
+                shots=payload.shots,
+                interaction=payload.interaction,
+                seed=payload.seed,
+            ),
+            "requestedBackend": "aer",
+            "provider": "aer",
+            "hardware": False,
+        }
+    else:
+        measurement = run_ionq_measurement(
+            region=payload.region,
+            intensity=payload.intensity,
+            shots=payload.shots,
+            interaction=payload.interaction,
+            requested_backend=payload.backend,
+            seed=payload.seed,
+        )
 
     counts = measurement["counts"]
     if not isinstance(counts, dict):
-        raise HTTPException(status_code=500, detail="Simulator returned invalid counts.")
+        raise HTTPException(status_code=500, detail="Quantum backend returned invalid counts.")
 
     region_states = counts_to_region_states(
         counts=counts,
@@ -84,10 +117,15 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
         shots=int(measurement["shots"]),
         seed=payload.seed,
     )
-    entanglement_links = build_entanglement_links(region_states)
+    marginals = calculate_marginals(counts, int(measurement["shots"]))
+    correlations = calculate_correlations(counts, int(measurement["shots"]))
+    entanglement_links = build_entanglement_links(region_states, correlations)
     return {
         **measurement,
         "region": payload.region,
+        "analysisVersion": 1,
+        "marginals": marginals,
+        "correlations": correlations,
         "regionStates": region_states,
         "entanglementLinks": entanglement_links,
         "nodeStates": counts_to_node_states(

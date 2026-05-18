@@ -8,7 +8,6 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshSurfaceSampler } from "three/examples/jsm/math/MeshSurfaceSampler.js";
 
 import type { BodyRegion } from "../lib/bodyRegions";
-import { regionFromSpatialPosition } from "../lib/bodyRegions";
 
 const GROUND_Y = -1.48;
 const SURFACE_POINT_COUNT = 42000;
@@ -122,6 +121,23 @@ const FIXED_REGION_CONNECTIONS: Record<FixedRegionLabel, FixedRegionLabel[]> = {
   node11: ["node2", "node13"],
   node12: ["node10"],
   node13: ["node11"],
+};
+
+const FIXED_REGION_BODY_REGIONS: Record<FixedRegionLabel, BodyRegion> = {
+  node0: "head",
+  node1: "chest",
+  node2: "torso",
+  node3: "oxygenTank",
+  node4: "rightShoulder",
+  node5: "leftShoulder",
+  node6: "rightArm",
+  node7: "leftArm",
+  node8: "rightHand",
+  node9: "leftHand",
+  node10: "rightLeg",
+  node11: "leftLeg",
+  node12: "rightFoot",
+  node13: "leftFoot",
 };
 
 export function OriginalGlbModel({
@@ -282,14 +298,15 @@ export function OriginalGlbModel({
     holdTimer.current = null;
   }
 
-  function regionFromEvent(event: ThreeEvent<PointerEvent>): { region: BodyRegion; point: Vector3Tuple; nodeIndex: number } | null {
+  function nodeHitFromEvent(event: ThreeEvent<PointerEvent>): { region: BodyRegion; point: Vector3Tuple; nodeIndex: number } | null {
     if (!model) return null;
-    const localPoint = event.point.clone();
-    model.scene.worldToLocal(localPoint);
+    const points = getFixedRegionPoints(model);
+    const nodeIndex = findNearestFixedRegionPointIndex(points, model.scene, event);
+    const node = points[nodeIndex];
     return {
-      region: regionFromSpatialPosition(localPoint.x, localPoint.y, model.minY, model.maxY),
+      region: FIXED_REGION_BODY_REGIONS[node.label],
       point: event.point.toArray() as Vector3Tuple,
-      nodeIndex: findNearestFixedRegionPointIndex(getFixedRegionPoints(model), model.scene, event),
+      nodeIndex,
     };
   }
 
@@ -317,7 +334,7 @@ export function OriginalGlbModel({
         object={model.scene}
         onPointerMove={(event: ThreeEvent<PointerEvent>) => {
           event.stopPropagation();
-          const hit = regionFromEvent(event);
+          const hit = nodeHitFromEvent(event);
           if (!hit) return;
           onHoverRegion(hit.region, hit.point);
         }}
@@ -331,7 +348,7 @@ export function OriginalGlbModel({
         }}
         onPointerUp={(event: ThreeEvent<PointerEvent>) => {
           event.stopPropagation();
-          const hit = regionFromEvent(event);
+          const hit = nodeHitFromEvent(event);
           if (holdTimer.current !== null && hit) {
             clearHoldTimer();
             onMeasureRegion(hit.region, hit.point, hit.nodeIndex);
@@ -935,16 +952,18 @@ function setNerveTarget(target: Vector3, start: Vector3, region: BodyRegion | nu
   const hipY = minY + height * 0.43;
   const neckY = minY + height * 0.76;
 
-  if (region === "rightArm") {
+  if (region === "rightShoulder" || region === "rightArm" || region === "rightHand") {
     target.set(0.34, shoulderY, start.z * 0.55);
-  } else if (region === "leftArm") {
+  } else if (region === "leftShoulder" || region === "leftArm" || region === "leftHand") {
     target.set(-0.34, shoulderY, start.z * 0.55);
-  } else if (region === "rightLeg") {
+  } else if (region === "rightLeg" || region === "rightFoot") {
     target.set(0.18, hipY, start.z * 0.55);
-  } else if (region === "leftLeg") {
+  } else if (region === "leftLeg" || region === "leftFoot") {
     target.set(-0.18, hipY, start.z * 0.55);
   } else if (region === "head") {
     target.set(0, neckY, start.z * 0.45);
+  } else if (region === "oxygenTank") {
+    target.set(0, shoulderY, start.z * -0.4);
   } else {
     target.set(0, shoulderY, start.z * 0.4);
   }
@@ -1215,10 +1234,18 @@ const reusableNerveCurrent = new Vector3();
 
 function regionToId(region: BodyRegion | null): number {
   if (region === "head") return 0;
-  if (region === "torso") return 1;
-  if (region === "leftArm") return 2;
-  if (region === "rightArm") return 3;
-  if (region === "leftLeg") return 4;
-  if (region === "rightLeg") return 5;
+  if (region === "chest") return 1;
+  if (region === "torso") return 2;
+  if (region === "oxygenTank") return 3;
+  if (region === "rightShoulder") return 4;
+  if (region === "leftShoulder") return 5;
+  if (region === "rightArm") return 6;
+  if (region === "leftArm") return 7;
+  if (region === "rightHand") return 8;
+  if (region === "leftHand") return 9;
+  if (region === "rightLeg") return 10;
+  if (region === "leftLeg") return 11;
+  if (region === "rightFoot") return 12;
+  if (region === "leftFoot") return 13;
   return -1;
 }

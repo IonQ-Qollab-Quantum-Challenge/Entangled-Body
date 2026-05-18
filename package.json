@@ -4,18 +4,20 @@
   "version": "0.1.0",
   "description": "Entangled Body monorepo bootstrap",
   "scripts": {
-    "setup": "bash ./scripts/setup.sh",
-    "build": "next build apps/web",
-    "dev": "next dev apps/web -p 3000",
-    "web:dev": "next dev apps/web -p 3000",
-    "api:dev": "bash ./scripts/dev.sh",
+    "setup": "node ./scripts/setup.mjs",
+    "build": "node ./scripts/web-build.mjs",
+    "dev": "node ./scripts/dev.mjs",
+    "web:dev": "node ./scripts/web-dev.mjs",
+    "api:dev": "node ./scripts/api-dev.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.0",
     "@types/three": "^0.176.0",
+    "codex": "^0.2.3",
     "next": "^15.3.1",
     "node": "^24.15.0",
+    "pytest": "^1.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "three": "^0.176.0"

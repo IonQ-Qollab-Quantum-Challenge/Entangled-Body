@@ -52,7 +52,7 @@ Detailed Terraform variables, manual deployment commands, custom domain notes, r
 ## Run the Frontend
 
 ```bash
-npm install
+npm run setup
 npm run dev
 ```
 
@@ -71,9 +71,42 @@ NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
 ## Run the Backend
 
 ```bash
+npm run setup
+npm run api:dev
+```
+
+Optional IonQ configuration can live in `apps/api/.env` or the repo-root `.env`. Real environment variables win over file values, and `apps/api/.env` wins over the repo-root `.env`.
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+```text
+IONQ_API_KEY=
+IONQ_BACKEND=ionq_qpu
+IONQ_SIMULATOR_BACKEND=ionq_simulator
+IONQ_QPU_BACKEND=ionq_qpu
+IONQ_ENABLE_HARDWARE=false
+IONQ_TIMEOUT_SECONDS=120
+```
+
+`ionq_hardware` is the default backend for live runs. It only submits to a QPU when `IONQ_API_KEY` is set and `IONQ_ENABLE_HARDWARE=true`; otherwise the API returns an Aer fallback payload with a `fallbackReason`. Select `aer` explicitly when you want local-only simulation.
+
+IonQ backend smoke tests can be run with pytest by passing the test file directly:
+
+```bash
 cd apps/api
-pip install -r requirements.txt
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+python -m pytest tests/smoke_quantum_backends.py -q
+```
+
+That command checks the Aer response contract, IonQ simulator fallback behavior, and the safety gate that prevents QPU submission when hardware is disabled. The real IonQ hardware integration test is skipped by default. To submit an actual IonQ QPU job, opt in explicitly:
+
+```bash
+cd apps/api
+IONQ_API_KEY=your-ionq-api-key \
+IONQ_ENABLE_HARDWARE=true \
+RUN_IONQ_HARDWARE_TEST=true \
+python -m pytest tests/smoke_quantum_backends.py::IonQHardwareIntegrationTests::test_real_ionq_hardware_execution_when_explicitly_enabled -q
 ```
 
 Backend URLs:
@@ -83,10 +116,35 @@ Backend URLs:
 - `GET http://localhost:8000/quantum/precomputed`
 - `POST http://localhost:8000/quantum/measure`
 
+Local Aer request:
+
+```bash
+curl -X POST http://localhost:8000/quantum/measure \
+  -H "Content-Type: application/json" \
+  -d '{"region":"torso","interaction":"click","shots":128,"backend":"aer","seed":42}'
+```
+
+IonQ simulator request:
+
+```bash
+curl -X POST http://localhost:8000/quantum/measure \
+  -H "Content-Type: application/json" \
+  -d '{"region":"rightHand","interaction":"click","shots":128,"backend":"ionq_simulator"}'
+```
+
+IonQ hardware request:
+
+```bash
+IONQ_ENABLE_HARDWARE=true python -m uvicorn main:app --host 0.0.0.0 --port 8000
+curl -X POST http://localhost:8000/quantum/measure \
+  -H "Content-Type: application/json" \
+  -d '{"region":"leftFoot","interaction":"click","shots":128,"backend":"ionq_hardware"}'
+```
+
 ## Interaction Model
 
 - Hover performs a weak measurement by reading precomputed quantum samples from `/quantum/precomputed`.
-- Click performs a strong measurement by calling `/quantum/measure`, which runs a 6-qubit Qiskit Aer circuit.
+- Click performs a strong measurement by calling `/quantum/measure`, which runs a 14-qubit Qiskit Aer circuit mapped to the visible blue node graph.
 - Hold triggers global collapse in the frontend, moving all tiles from scattered positions to the sampled body surface.
 
 ## Tile Sampling

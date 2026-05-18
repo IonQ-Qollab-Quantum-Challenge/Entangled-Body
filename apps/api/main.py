@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from config.env import load_env_files
 from routes.quantum import router as quantum_router
+
+load_env_files()
 
 app = FastAPI(title="Entangled Body API", version="0.1.0")
 
