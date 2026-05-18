@@ -28,7 +28,7 @@ class MeasurementRequest(BaseModel):
     intensity: float = Field(default=1.0, ge=0.0, le=1.0)
     shots: int = Field(default=1024, ge=1, le=8192)
     interaction: Literal["hover", "click", "hold"] = Field(default="click")
-    backend: MeasurementBackend = Field(default="ionq_hardware")
+    backend: MeasurementBackend = Field(default="ionq_simulator")
     seed: int | None = Field(default=None)
 
     @field_validator("region")
@@ -43,9 +43,16 @@ class MeasurementRequest(BaseModel):
 @router.get("/health")
 def quantum_health() -> dict:
     status = ionq_status()
+    default_backend = status["default_backend"]
+    if default_backend == "ionq_hardware":
+        mode = "live" if status["ionq_configured"] and status["ionq_hardware_enabled"] else "simulator"
+    elif default_backend == "ionq_simulator":
+        mode = "ionq_simulator" if status["ionq_configured"] else "simulator"
+    else:
+        mode = "simulator"
     return {
         "ok": True,
-        "mode": "live" if status["ionq_configured"] and status["ionq_hardware_enabled"] else "simulator",
+        "mode": mode,
         **status,
     }
 

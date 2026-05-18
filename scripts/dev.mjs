@@ -1,6 +1,7 @@
 import {
   apiDir,
   ensureVenvExists,
+  freePorts,
   localBin,
   spawnForeground,
   venvPython,
@@ -8,6 +9,7 @@ import {
 } from "./runtime.mjs";
 
 ensureVenvExists("dev");
+freePorts([3000, 8000], "dev");
 
 const children = [
   spawnForeground(

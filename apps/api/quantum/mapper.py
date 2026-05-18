@@ -4,6 +4,7 @@ import json
 from itertools import combinations
 from math import log2
 from pathlib import Path
+from heapq import heappop, heappush
 from typing import Any
 
 
@@ -41,6 +42,22 @@ DEFAULT_QUBIT_INDEXES = {
     "rightFoot": 12,
     "leftFoot": 13,
 }
+DEFAULT_SPATIAL_POSITIONS = {
+    "head": (0.0, 0.895, 0.22),
+    "chest": (0.0, 0.695, 0.22),
+    "torso": (0.0, 0.555, 0.22),
+    "oxygenTank": (0.0, 0.645, -0.24),
+    "rightShoulder": (-0.23, 0.735, 0.0),
+    "leftShoulder": (0.23, 0.735, 0.0),
+    "rightArm": (-0.36, 0.605, 0.0),
+    "leftArm": (0.36, 0.605, 0.0),
+    "rightHand": (-0.43, 0.46, 0.22),
+    "leftHand": (0.43, 0.46, 0.22),
+    "rightLeg": (-0.13, 0.315, 0.0),
+    "leftLeg": (0.13, 0.315, 0.0),
+    "rightFoot": (-0.14, 0.04, 0.22),
+    "leftFoot": (0.14, 0.04, 0.22),
+}
 
 
 def load_region_map() -> dict[str, Any]:
@@ -73,6 +90,14 @@ def validate_region_map(region_map: dict[str, Any]) -> None:
             raise ValueError(f"Invalid qubitIndex for region: {region_id}")
         if qubit_index in seen_qubits:
             raise ValueError(f"Duplicate qubitIndex: {qubit_index}")
+        spatial_position = entry.get("spatialPosition")
+        if spatial_position is not None:
+            if (
+                not isinstance(spatial_position, list)
+                or len(spatial_position) != 3
+                or not all(isinstance(value, int | float) for value in spatial_position)
+            ):
+                raise ValueError(f"Invalid spatialPosition for region: {region_id}")
         seen_ids.add(region_id)
         seen_qubits.add(qubit_index)
 
@@ -84,6 +109,9 @@ def validate_region_map(region_map: dict[str, Any]) -> None:
             raise ValueError("Each entanglement link must be an object.")
         if link.get("source") not in seen_ids or link.get("target") not in seen_ids:
             raise ValueError("Entanglement links must reference known regions.")
+        strength = link.get("strength", 0.65)
+        if not isinstance(strength, int | float) or strength <= 0:
+            raise ValueError("Entanglement link strength must be a positive number.")
 
 
 def _region_ids() -> list[str]:
@@ -109,32 +137,166 @@ def get_region_entries() -> list[dict[str, Any]]:
 
 
 def get_entanglement_pairs() -> list[tuple[str, str]]:
+    return [
+        (link["source"], link["target"])
+        for link in get_entanglement_links_with_strength()
+    ]
+
+
+def get_entanglement_links_with_strength() -> list[dict[str, Any]]:
     try:
         region_map = load_region_map()
     except (OSError, json.JSONDecodeError, ValueError):
         return [
-            ("head", "chest"),
-            ("head", "oxygenTank"),
-            ("chest", "torso"),
-            ("chest", "oxygenTank"),
-            ("chest", "rightShoulder"),
-            ("chest", "leftShoulder"),
-            ("torso", "oxygenTank"),
-            ("torso", "rightLeg"),
-            ("torso", "leftLeg"),
-            ("oxygenTank", "rightShoulder"),
-            ("oxygenTank", "leftShoulder"),
-            ("rightShoulder", "rightArm"),
-            ("leftShoulder", "leftArm"),
-            ("rightArm", "rightHand"),
-            ("leftArm", "leftHand"),
-            ("rightLeg", "rightFoot"),
-            ("leftLeg", "leftFoot"),
+            {"source": "head", "target": "chest", "strength": 0.88},
+            {"source": "head", "target": "oxygenTank", "strength": 0.72},
+            {"source": "chest", "target": "torso", "strength": 0.9},
+            {"source": "chest", "target": "oxygenTank", "strength": 0.78},
+            {"source": "chest", "target": "rightShoulder", "strength": 0.8},
+            {"source": "chest", "target": "leftShoulder", "strength": 0.8},
+            {"source": "torso", "target": "oxygenTank", "strength": 0.7},
+            {"source": "torso", "target": "rightLeg", "strength": 0.76},
+            {"source": "torso", "target": "leftLeg", "strength": 0.76},
+            {"source": "oxygenTank", "target": "rightShoulder", "strength": 0.66},
+            {"source": "oxygenTank", "target": "leftShoulder", "strength": 0.66},
+            {"source": "rightShoulder", "target": "rightArm", "strength": 0.84},
+            {"source": "leftShoulder", "target": "leftArm", "strength": 0.84},
+            {"source": "rightArm", "target": "rightHand", "strength": 0.82},
+            {"source": "leftArm", "target": "leftHand", "strength": 0.82},
+            {"source": "rightLeg", "target": "rightFoot", "strength": 0.8},
+            {"source": "leftLeg", "target": "leftFoot", "strength": 0.8},
+            {"source": "leftHand", "target": "rightHand", "strength": 0.62},
+            {"source": "head", "target": "leftHand", "strength": 0.42},
+            {"source": "head", "target": "rightHand", "strength": 0.42},
         ]
     return [
-        (link["source"], link["target"])
+        {
+            "source": link["source"],
+            "target": link["target"],
+            "strength": float(link.get("strength", 0.65)),
+        }
         for link in region_map.get("entanglementLinks", [])
     ]
+
+
+def graph_neighbors(region: str) -> list[dict[str, Any]]:
+    neighbors: list[dict[str, Any]] = []
+    for link in get_entanglement_links_with_strength():
+        if link["source"] == region:
+            neighbors.append({"region": link["target"], "strength": link["strength"]})
+        elif link["target"] == region:
+            neighbors.append({"region": link["source"], "strength": link["strength"]})
+    return neighbors
+
+
+def all_graph_distances(source_region: str) -> dict[str, float]:
+    distances = {region: float("inf") for region in REGIONS}
+    if source_region not in distances:
+        source_region = "torso"
+    distances[source_region] = 0.0
+    queue: list[tuple[float, str]] = [(0.0, source_region)]
+
+    while queue:
+        current_distance, region = heappop(queue)
+        if current_distance > distances[region]:
+            continue
+        for neighbor in graph_neighbors(region):
+            strength = max(0.05, min(1.0, float(neighbor["strength"])))
+            edge_cost = 1.0 / strength
+            next_distance = current_distance + edge_cost
+            next_region = neighbor["region"]
+            if next_distance < distances[next_region]:
+                distances[next_region] = next_distance
+                heappush(queue, (next_distance, next_region))
+
+    finite_distances = [value for value in distances.values() if value != float("inf")]
+    fallback_distance = (max(finite_distances) if finite_distances else 0.0) + 1.0
+    return {
+        region: round(distance if distance != float("inf") else fallback_distance, 6)
+        for region, distance in distances.items()
+    }
+
+
+def graph_distance(source_region: str, target_region: str) -> float:
+    return all_graph_distances(source_region).get(target_region, float("inf"))
+
+
+def get_region_spatial_positions() -> dict[str, tuple[float, float, float]]:
+    try:
+        entries = get_region_entries()
+    except (OSError, json.JSONDecodeError, ValueError):
+        return dict(DEFAULT_SPATIAL_POSITIONS)
+
+    positions: dict[str, tuple[float, float, float]] = {}
+    for entry in entries:
+        region = entry["id"]
+        raw_position = entry.get("spatialPosition")
+        if (
+            isinstance(raw_position, list)
+            and len(raw_position) == 3
+            and all(isinstance(value, int | float) for value in raw_position)
+        ):
+            positions[region] = (float(raw_position[0]), float(raw_position[1]), float(raw_position[2]))
+        else:
+            positions[region] = DEFAULT_SPATIAL_POSITIONS.get(region, (0.0, 0.0, 0.0))
+    return positions
+
+
+def all_spatial_distances(source_region: str) -> dict[str, float]:
+    positions = get_region_spatial_positions()
+    if source_region not in positions:
+        source_region = "torso"
+    source = positions[source_region]
+    return {
+        region: round(euclidean_distance(source, position), 6)
+        for region, position in positions.items()
+    }
+
+
+def spatial_distance(source_region: str, target_region: str) -> float:
+    return all_spatial_distances(source_region).get(target_region, float("inf"))
+
+
+def all_spatial_graph_distances(source_region: str) -> dict[str, float]:
+    positions = get_region_spatial_positions()
+    distances = {region: float("inf") for region in REGIONS}
+    if source_region not in distances:
+        source_region = "torso"
+    distances[source_region] = 0.0
+    queue: list[tuple[float, str]] = [(0.0, source_region)]
+
+    while queue:
+        current_distance, region = heappop(queue)
+        if current_distance > distances[region]:
+            continue
+        source_position = positions.get(region, DEFAULT_SPATIAL_POSITIONS.get(region, (0.0, 0.0, 0.0)))
+        for neighbor in graph_neighbors(region):
+            next_region = neighbor["region"]
+            target_position = positions.get(next_region, DEFAULT_SPATIAL_POSITIONS.get(next_region, (0.0, 0.0, 0.0)))
+            edge_length = max(0.001, euclidean_distance(source_position, target_position))
+            next_distance = current_distance + edge_length
+            if next_distance < distances[next_region]:
+                distances[next_region] = next_distance
+                heappush(queue, (next_distance, next_region))
+
+    finite_distances = [value for value in distances.values() if value != float("inf")]
+    fallback_distance = (max(finite_distances) if finite_distances else 0.0) + 1.0
+    return {
+        region: round(distance if distance != float("inf") else fallback_distance, 6)
+        for region, distance in distances.items()
+    }
+
+
+def spatial_graph_distance(source_region: str, target_region: str) -> float:
+    return all_spatial_graph_distances(source_region).get(target_region, float("inf"))
+
+
+def euclidean_distance(left: tuple[float, float, float], right: tuple[float, float, float]) -> float:
+    return (
+        (left[0] - right[0]) ** 2
+        + (left[1] - right[1]) ** 2
+        + (left[2] - right[2]) ** 2
+    ) ** 0.5
 
 
 def _empty_state() -> dict[str, float]:
@@ -254,29 +416,40 @@ def build_entanglement_links(
     links: list[dict[str, Any]] = []
 
     if correlations is not None:
-        candidate_pairs = {tuple(sorted(pair)) for pair in get_entanglement_pairs()}
-        for correlation in correlations:
-            source = correlation["source"]
-            target = correlation["target"]
-            if tuple(sorted((source, target))) not in candidate_pairs:
+        correlation_by_pair = {
+            tuple(sorted((correlation["source"], correlation["target"]))): correlation
+            for correlation in correlations
+        }
+        for configured_link in get_entanglement_links_with_strength():
+            source = configured_link["source"]
+            target = configured_link["target"]
+            configured_strength = float(configured_link["strength"])
+            correlation = correlation_by_pair.get(tuple(sorted((source, target))))
+            if correlation is None:
+                links.append({"source": source, "target": target, "strength": round(configured_strength, 4)})
                 continue
             mutual_information_value = float(correlation["mutualInformation"])
-            if mutual_information_value > 0.04:
-                links.append(
-                    {
-                        "source": source,
-                        "target": target,
-                        "strength": round(min(1.0, mutual_information_value), 4),
-                    }
-                )
+            zz_alignment = abs(float(correlation["zz"]))
+            aligned_strength = max(0.0, zz_alignment - 0.84) * configured_strength
+            strength = max(configured_strength * 0.35, mutual_information_value, aligned_strength)
+            links.append(
+                {
+                    "source": source,
+                    "target": target,
+                    "strength": round(min(1.0, strength), 4),
+                }
+            )
         return links
 
-    for source, target in get_entanglement_pairs():
+    for configured_link in get_entanglement_links_with_strength():
+        source = configured_link["source"]
+        target = configured_link["target"]
+        configured_strength = float(configured_link["strength"])
         source_state = region_states.get(source, _empty_state())
         target_state = region_states.get(target, _empty_state())
-        strength = (source_state["coherence"] + target_state["coherence"]) / 2
-        if strength > 0.12:
-            links.append({"source": source, "target": target, "strength": round(strength, 4)})
+        state_strength = (source_state["coherence"] + target_state["coherence"]) / 2
+        strength = max(configured_strength * 0.35, state_strength)
+        links.append({"source": source, "target": target, "strength": round(min(1.0, strength), 4)})
 
     return links
 

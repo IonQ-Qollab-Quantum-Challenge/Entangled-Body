@@ -244,6 +244,8 @@ type QuantumNodeDashboardProps = {
   modelStable: boolean;
   loading: boolean;
   inspectedNode: InspectedNode | null;
+  backend: QuantumBackend;
+  onBackendChange: (backend: QuantumBackend) => void;
 };
 
 export function QuantumNodeDashboard({
@@ -256,12 +258,13 @@ export function QuantumNodeDashboard({
   modelStable,
   loading,
   inspectedNode,
+  backend,
+  onBackendChange,
 }: QuantumNodeDashboardProps) {
   const [status, setStatus] = useState<NodeStatus>("checking");
   const [health, setHealth] = useState<QuantumHealth | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<BodyRegion>("torso");
   const [interaction, setInteraction] = useState<QuantumInteraction>("click");
-  const [backend, setBackend] = useState<QuantumBackend>("ionq_hardware");
   const [shots, setShots] = useState(512);
   const [seed, setSeed] = useState(42);
   const [measurement, setMeasurement] = useState<QuantumMeasurementPayload | null>(null);
@@ -350,6 +353,7 @@ export function QuantumNodeDashboard({
   const selectedState = effectiveMeasurement?.regionStates?.[selectedRegion];
   const nodeStates = effectiveMeasurement?.nodeStates ?? [];
   const inspectedNodeState = getInspectedNodeState(nodeStates, inspectedNode);
+  const executionMode = formatExecutionMode(effectiveMeasurement, health, backend);
   const sceneProgress = mode === "collapse" ? collapseProgress : stableProgress;
   const sceneStatus = loading ? "measuring" : modelStable ? "stabilizing" : "ready";
   const copy =
@@ -392,97 +396,46 @@ export function QuantumNodeDashboard({
       ) : null}
 
       <ModeStory copy={copy} />
+      <BackendSelector backend={backend} onBackendChange={onBackendChange} />
 
       {appMode === "measurement" ? (
-        <MeasurementState measurement={effectiveMeasurement} />
-      ) : (
         <>
-          <section className="quantum-dashboard__inspect-node" aria-label="Selected quantum node">
-            <div className="quantum-dashboard__section-title">Selected Node</div>
-            <div className="quantum-dashboard__inspect-grid">
-              <Metric label="Node" value={formatNodeLabel(inspectedNode?.index)} />
-              <Metric label="Qubit" value={String(inspectedNode?.qubitIndex ?? "--")} />
-              <Metric label="Bit" value={inspectedNodeState?.measuredBit ?? "-"} />
-              <Metric label="Probability" value={formatStateValue(inspectedNodeState?.probability)} />
-              <Metric label="Coherence" value={formatStateValue(inspectedNodeState?.coherence)} />
-            </div>
-          </section>
-
-          <section className="quantum-dashboard__grid">
-            <Metric label="Mode" value={health?.mode ?? "--"} />
-            <Metric label="IonQ" value={health?.ionq_configured ? (health.ionq_hardware_enabled ? "QPU Armed" : "Configured") : "Aer"} />
-            <Metric label="Qubits" value={String(effectiveMeasurement?.qubits ?? 14)} />
-            <Metric label="Last Check" value={lastChecked} />
-          </section>
-
-          <div className="quantum-dashboard__controls">
-            <label>
-              Region
-              <select value={selectedRegion} onChange={(event) => setSelectedRegion(event.target.value as BodyRegion)}>
-                {BODY_REGIONS.map((region) => (
-                  <option key={region} value={region}>
-                    {REGION_LABELS[region]}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Event
-              <select value={interaction} onChange={(event) => setInteraction(event.target.value as QuantumInteraction)}>
-                <option value="hover">Hover</option>
-                <option value="click">Click</option>
-                <option value="hold">Hold</option>
-              </select>
-            </label>
-
-            <label>
-              Backend
-              <select value={backend} onChange={(event) => setBackend(event.target.value as QuantumBackend)}>
-                <option value="aer">Aer Local</option>
-                <option value="ionq_simulator">IonQ Simulator</option>
-                <option value="ionq_hardware">IonQ Hardware QPU</option>
-              </select>
-            </label>
-
-            <label>
-              Shots
-              <input type="number" min={32} max={8192} step={32} value={shots} onChange={(event) => setShots(clampInteger(Number(event.target.value), 32, 8192))} />
-            </label>
-
-            <label>
-              Seed
-              <input type="number" min={0} value={seed} onChange={(event) => setSeed(clampInteger(Number(event.target.value), 0, 999999))} />
-            </label>
-          </div>
-
-          <div className="quantum-dashboard__actions">
-            <button type="button" onClick={refreshHealth} disabled={busy}>
-              Check
-            </button>
-            <button type="button" onClick={runProbe} disabled={busy}>
-              {busy ? "Running" : "Probe"}
-            </button>
-          </div>
-
-          {error ? <div className="quantum-dashboard__error">{error}</div> : null}
-          {backend === "ionq_hardware" ? <div className="quantum-dashboard__warning">Hardware QPU only runs when IONQ_ENABLE_HARDWARE=true.</div> : null}
-
-          <ProbeResult measurement={effectiveMeasurement} topCounts={topCounts} />
-
-          <section className="quantum-dashboard__state">
-            <Metric label="Activation" value={formatStateValue(selectedState?.activation)} />
-            <Metric label="Coherence" value={formatStateValue(selectedState?.coherence)} />
-            <Metric label="Displace" value={formatStateValue(selectedState?.displacement)} />
-            <Metric label="Links" value={String(effectiveMeasurement?.entanglementLinks?.length ?? 0)} />
-          </section>
-
-          <NodeStateList nodeStates={nodeStates} showState={false} />
+          <MeasurementState measurement={effectiveMeasurement} executionMode={executionMode} />
+          <NodeStateList nodeStates={nodeStates} showState />
         </>
+      ) : (
+        <section className="quantum-dashboard__inspect-node" aria-label="Selected quantum node">
+          <div className="quantum-dashboard__section-title">Selected Node</div>
+          <div className="quantum-dashboard__inspect-grid">
+            <Metric label="Node" value={formatNodeLabel(inspectedNode?.index)} />
+            <Metric label="Qubit" value={String(inspectedNode?.qubitIndex ?? "--")} />
+            <Metric label="Bit" value={inspectedNodeState?.measuredBit ?? "-"} />
+            <Metric label="Probability" value={formatStateValue(inspectedNodeState?.probability)} />
+            <Metric label="Activation" value={formatStateValue(inspectedNodeState?.activation)} />
+            <Metric label="Coherence" value={formatStateValue(inspectedNodeState?.coherence)} />
+          </div>
+        </section>
       )}
 
+      {error ? <div className="quantum-dashboard__error">{error}</div> : null}
+      {backend === "ionq_hardware" ? <div className="quantum-dashboard__warning">Hardware QPU only runs when IONQ_ENABLE_HARDWARE=true.</div> : null}
       {effectiveMeasurement?.fallbackReason ? <div className="quantum-dashboard__warning">Fallback: {effectiveMeasurement.fallbackReason}</div> : null}
     </aside>
+  );
+}
+
+function BackendSelector({ backend, onBackendChange }: { backend: QuantumBackend; onBackendChange: (backend: QuantumBackend) => void }) {
+  return (
+    <section className="quantum-dashboard__controls" aria-label="Quantum backend selection">
+      <label>
+        Backend
+        <select value={backend} onChange={(event) => onBackendChange(event.target.value as QuantumBackend)}>
+          <option value="aer">Aer Local</option>
+          <option value="ionq_simulator">IonQ Simulator</option>
+          <option value="ionq_hardware">IonQ Hardware QPU</option>
+        </select>
+      </label>
+    </section>
   );
 }
 
@@ -498,13 +451,13 @@ function ModeStory({ copy }: { copy: ModeCopy }) {
   );
 }
 
-function MeasurementState({ measurement }: { measurement?: QuantumMeasurementPayload | null }) {
+function MeasurementState({ measurement, executionMode }: { measurement?: QuantumMeasurementPayload | null; executionMode: string }) {
   return (
     <section className="quantum-dashboard__state">
       <Metric label="Entangled Links" value={String(measurement?.entanglementLinks?.length ?? 0)} />
       <Metric label="Dominant State" value={measurement?.dominantBitstring ?? "------"} />
-      <Metric label="Qubits" value={String(measurement?.qubits ?? 14)} />
-      <Metric label="Shots" value={String(measurement?.shots ?? "--")} />
+      <Metric label="Mode" value={executionMode} />
+      <Metric label="Circuit" value={formatCircuitType(measurement?.circuitType)} />
     </section>
   );
 }
@@ -570,6 +523,38 @@ function formatNodeLabel(index: number | undefined): string {
 
 function formatStateValue(value: number | undefined): string {
   return typeof value === "number" && Number.isFinite(value) ? value.toFixed(3) : "--";
+}
+
+function formatCircuitType(circuitType: string | undefined): string {
+  if (!circuitType) return "--";
+  return circuitType.replaceAll("_", " ");
+}
+
+function formatExecutionMode(measurement: QuantumMeasurementPayload | null | undefined, health: QuantumHealth | null, selectedBackend: QuantumBackend): string {
+  if (measurement) {
+    const source = measurement.source;
+    const provider = measurement.provider;
+    const backend = measurement.backend;
+    const requestedBackend = measurement.requestedBackend;
+
+    if (source === "precomputed" || provider === "precomputed") return "Precomputed";
+    if (source === "local-fallback") return "Local fallback";
+    if (provider === "ionq" && measurement.hardware) return "Live QPU";
+    if (provider === "ionq" || requestedBackend === "ionq_simulator" || backend === "ionq_simulator") return "IonQ simulator";
+    if (provider === "aer" || requestedBackend === "aer" || backend === "aer") {
+      return source === "fallback" ? "Aer fallback" : "Aer simulator";
+    }
+    if (source === "fallback") return "Fallback";
+  }
+
+  if (selectedBackend === "aer") return "Aer simulator";
+  if (selectedBackend === "ionq_simulator") return "IonQ simulator";
+  if (selectedBackend === "ionq_hardware") return "Live QPU";
+  if (health?.default_backend === "ionq_hardware") return "Live QPU";
+  if (health?.default_backend === "ionq_simulator" || health?.mode === "ionq_simulator") return "IonQ simulator";
+  if (health?.mode === "live") return "Live QPU";
+  if (health?.mode === "simulator") return "Simulator";
+  return "--";
 }
 
 function clampInteger(value: number, min: number, max: number): number {

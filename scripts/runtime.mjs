@@ -63,6 +63,67 @@ export function spawnForeground(command, args, options = {}) {
   return child;
 }
 
+export function freePorts(ports, label) {
+  for (const port of ports) {
+    const pids = portPids(port);
+    for (const pid of pids) {
+      if (pid === process.pid) {
+        continue;
+      }
+      console.log(`[${label}] Closing process ${pid} on port ${port}.`);
+      killPid(pid);
+    }
+  }
+}
+
+function portPids(port) {
+  if (isWindows) {
+    const result = spawnSync("netstat", ["-ano", "-p", "tcp"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    if (result.status !== 0 || !result.stdout) {
+      return [];
+    }
+    return uniquePids(
+      result.stdout
+        .split(/\r?\n/)
+        .map((line) => line.trim().split(/\s+/))
+        .filter((parts) => parts.length >= 5 && parts[1]?.endsWith(`:${port}`) && parts[3] === "LISTENING")
+        .map((parts) => Number.parseInt(parts[4], 10)),
+    );
+  }
+
+  const result = spawnSync("lsof", ["-ti", `tcp:${port}`, "-sTCP:LISTEN"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+  if (result.status !== 0 || !result.stdout) {
+    return [];
+  }
+  return uniquePids(
+    result.stdout
+      .split(/\s+/)
+      .map((value) => Number.parseInt(value, 10)),
+  );
+}
+
+function uniquePids(pids) {
+  return [...new Set(pids.filter((pid) => Number.isInteger(pid) && pid > 0))];
+}
+
+function killPid(pid) {
+  if (isWindows) {
+    spawnSync("taskkill", ["/PID", String(pid), "/T", "/F"], { stdio: "ignore" });
+    return;
+  }
+  try {
+    process.kill(pid, "SIGTERM");
+  } catch {
+    return;
+  }
+}
+
 function shouldUseShell(command) {
   return isWindows && /\.(cmd|bat)$/i.test(command);
 }

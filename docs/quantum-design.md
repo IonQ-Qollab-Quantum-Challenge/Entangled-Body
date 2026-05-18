@@ -69,15 +69,27 @@ q13 = leftFoot
 
 The register order must stay stable across the frontend, API, circuit builder, and result mapper. A change to this mapping changes the meaning of every measured bitstring.
 
+## Graph-Shaped Collapse Distribution
+
+The current collapse engine treats the selected blue node as a classical interaction anchor. That anchor parameterizes the circuit: nearby graph nodes receive larger `Ry(theta)` rotations, distant nodes receive smaller rotations, and weighted graph links receive shallow correlation gates. The circuit then produces a graph-shaped collapse distribution through distance-shaped rotations and weighted correlation gates. It does not claim that a user observation physically controls distant body regions.
+
+Each region target probability is converted to a rotation angle with:
+
+```text
+theta = 2 * asin(sqrt(p1))
+```
+
+The observed node is biased strongly toward active state `1`, while connected and nearby nodes receive probabilities shaped by graph distance, interaction intensity, and link strength. The measured 14-bit result remains the source of truth for activation, coherence, displacement, and visible link strength.
+
 ## Entanglement Circuit Families
 
 The app should use three circuit families. Each family creates real quantum correlations through gates, then projects the result into the blue-point graph.
 
 | Interaction | Circuit | Hardware Use | Visual Meaning |
 | --- | --- | --- | --- |
-| Hover | `local_probe` | Simulator or precomputed by default | A light probe of a node and its nearby candidate links |
-| Click | `bell_pair` | Good IonQ QPU candidate | Strong pairwise entanglement between selected blue node and target node |
-| Hold | `ghz_body` | Good IonQ QPU candidate when queue/cost allow | Body-wide multipartite entanglement and global collapse |
+| Hover | `graph_probe` | Simulator or precomputed by default | A light graph-shaped probe around the selected node |
+| Click | `graph_collapse` | Good IonQ simulator or QPU candidate | Selected-node collapse distribution over the weighted body graph |
+| Hold | `graph_global_collapse` | Good IonQ QPU candidate when queue/cost allow | Stronger body-wide graph collapse and correlation response |
 
 ### Local Probe Circuit
 

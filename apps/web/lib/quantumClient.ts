@@ -2,7 +2,10 @@ import precomputedSamples from "../../api/data/precomputed_samples.json";
 import { BODY_REGIONS, type BodyRegion, type QuantumNodeState, type RegionState } from "./bodyRegions";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
-const REQUEST_TIMEOUT_MS = 60000;
+const REQUEST_TIMEOUT_MS = parsePositiveInteger(
+  process.env.NEXT_PUBLIC_QUANTUM_REQUEST_TIMEOUT_MS,
+  300000,
+);
 
 export type QuantumInteraction = "hover" | "click" | "hold";
 export type QuantumBackend = "aer" | "ionq_simulator" | "ionq_hardware";
@@ -80,11 +83,11 @@ export async function measure(
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, backend: options.backend ?? "ionq_hardware", seed: safeSeed }),
+      body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, backend: options.backend ?? "ionq_simulator", seed: safeSeed }),
     },
     () => buildLocalMeasurement(region, safeIntensity, safeShots, {
       interaction: options.interaction ?? "click",
-      backend: options.backend ?? "ionq_hardware",
+      backend: options.backend ?? "ionq_simulator",
       seed: safeSeed,
     }),
   );
@@ -127,7 +130,13 @@ function shouldUseLocalFallback(error: unknown): boolean {
     error.message.includes("Failed to fetch") ||
     error.message.includes("Load failed") ||
     error.message.includes("NetworkError") ||
+    error.message.includes("socket hang up") ||
+    error.message.includes("ECONNRESET") ||
     error.message.includes("Request failed with 404") ||
+    error.message.includes("Request failed with 500") ||
+    error.message.includes("Request failed with 502") ||
+    error.message.includes("Request failed with 503") ||
+    error.message.includes("Request failed with 504") ||
     error.message.includes("Request failed with 403") ||
     error.message.includes("Request failed with 405")
   );
@@ -226,4 +235,10 @@ function seededValue(seed: number, index: number): number {
 function clamp(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) return min;
   return Math.max(min, Math.min(max, value));
+}
+
+function parsePositiveInteger(value: string | undefined, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }

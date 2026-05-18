@@ -6,7 +6,7 @@ import type { Vector3Tuple } from "three";
 
 import { emptyRegionStates, type BodyQuantumState, type BodyRegion } from "../lib/bodyRegions";
 import { mapQuantumToBody } from "../lib/mapQuantumToBody";
-import { getPrecomputed, measure, type QuantumMeasurementPayload } from "../lib/quantumClient";
+import { getPrecomputed, measure, type QuantumBackend, type QuantumMeasurementPayload } from "../lib/quantumClient";
 import { BackgroundMusic } from "./BackgroundMusic";
 import { CameraControls } from "./CameraControls";
 import { LoadingIntro } from "./LoadingIntro";
@@ -29,6 +29,7 @@ type InspectedNode = {
 export function BodyScene() {
   const [mode, setMode] = useState<"superposition" | "collapse">("superposition");
   const [appMode, setAppMode] = useState<AppMode>("inspect");
+  const [quantumBackend, setQuantumBackend] = useState<QuantumBackend>("aer");
   const [collapseProgress, setCollapseProgress] = useState(0);
   const [quantumState, setQuantumState] = useState<BodyQuantumState>({
     regionStates: emptyRegionStates(),
@@ -159,6 +160,10 @@ export function BodyScene() {
   const applyWeakMeasurement = useCallback(async (region: BodyRegion | null, point?: Vector3Tuple) => {
     setHoveredRegion(region);
     setHoveredPoint(point ?? null);
+    if (appMode === "inspect") {
+      if (!region) lastHoverRegion.current = null;
+      return;
+    }
     if (modelStable) return;
     if (!region) {
       lastHoverRegion.current = null;
@@ -186,7 +191,7 @@ export function BodyScene() {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Precomputed quantum request failed.");
     }
-  }, [modelStable]);
+  }, [appMode, modelStable]);
 
   const inspectQuantumNode = useCallback(async (region: BodyRegion, point?: Vector3Tuple, nodeIndex = 0) => {
     if (loading) return;
@@ -207,7 +212,7 @@ export function BodyScene() {
         region,
         point: point ?? hoveredPoint ?? [0, 0, 0],
       });
-      const payload = await measure(region, 0.45, 512, { interaction: "hover" });
+      const payload = await measure(region, 0.45, 512, { interaction: "hover", backend: quantumBackend });
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
@@ -216,7 +221,7 @@ export function BodyScene() {
     } finally {
       setLoading(false);
     }
-  }, [hoveredPoint, loading]);
+  }, [hoveredPoint, loading, quantumBackend]);
 
   const triggerGlobalCollapse = useCallback(async (region?: BodyRegion, point?: Vector3Tuple) => {
     if (loading || collapseLocked) return;
@@ -229,7 +234,7 @@ export function BodyScene() {
       setHoveredPoint(point ?? hoveredPoint);
       startConnectionBreakAnimation(point);
       startCollapseAnimation(point);
-      const payload = await measure(region ?? hoveredRegion ?? "torso", 1, 1024, { interaction: "hold" });
+      const payload = await measure(region ?? hoveredRegion ?? "torso", 1, 1024, { interaction: "hold", backend: quantumBackend });
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
@@ -238,7 +243,7 @@ export function BodyScene() {
     } finally {
       setLoading(false);
     }
-  }, [collapseLocked, hoveredPoint, hoveredRegion, loading, startCollapseAnimation, startConnectionBreakAnimation]);
+  }, [collapseLocked, hoveredPoint, hoveredRegion, loading, quantumBackend, startCollapseAnimation, startConnectionBreakAnimation]);
 
   const applyStrongMeasurement = useCallback((region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => {
     if (appMode === "inspect") {
@@ -374,6 +379,8 @@ export function BodyScene() {
           modelStable={modelStable}
           loading={loading}
           inspectedNode={inspectedNode}
+          backend={quantumBackend}
+          onBackendChange={setQuantumBackend}
         />
       </div>
     </main>

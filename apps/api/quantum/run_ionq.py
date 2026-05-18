@@ -16,7 +16,7 @@ IONQ_QPU_BACKEND_ENV = "IONQ_QPU_BACKEND"
 
 DEFAULT_SIMULATOR_BACKEND = "ionq_simulator"
 DEFAULT_QPU_BACKEND = "ionq_qpu"
-DEFAULT_TIMEOUT_SECONDS = 120
+DEFAULT_TIMEOUT_SECONDS = 300
 
 load_env_files()
 
@@ -37,7 +37,7 @@ def ionq_status() -> dict[str, Any]:
         "ionq_qpu_backend": _qpu_backend_name(),
         "ionq_timeout_seconds": _timeout_seconds(),
         "available_backends": ["aer", "ionq_simulator", "ionq_hardware"],
-        "default_backend": "ionq_hardware",
+        "default_backend": "ionq_simulator",
     }
 
 

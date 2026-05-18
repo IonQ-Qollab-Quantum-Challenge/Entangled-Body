@@ -4,142 +4,188 @@
     {
       "id": "head",
       "label": "Head",
-      "qubitIndex": 0
+      "qubitIndex": 0,
+      "spatialPosition": [0.0, 0.895, 0.22]
     },
     {
       "id": "chest",
       "label": "Chest",
-      "qubitIndex": 1
+      "qubitIndex": 1,
+      "spatialPosition": [0.0, 0.695, 0.22]
     },
     {
       "id": "torso",
       "label": "Torso",
-      "qubitIndex": 2
+      "qubitIndex": 2,
+      "spatialPosition": [0.0, 0.555, 0.22]
     },
     {
       "id": "oxygenTank",
       "label": "Oxygen Tank",
-      "qubitIndex": 3
+      "qubitIndex": 3,
+      "spatialPosition": [0.0, 0.645, -0.24]
     },
     {
       "id": "rightShoulder",
       "label": "Right Shoulder",
-      "qubitIndex": 4
+      "qubitIndex": 4,
+      "spatialPosition": [-0.23, 0.735, 0.0]
     },
     {
       "id": "leftShoulder",
       "label": "Left Shoulder",
-      "qubitIndex": 5
+      "qubitIndex": 5,
+      "spatialPosition": [0.23, 0.735, 0.0]
     },
     {
       "id": "rightArm",
       "label": "Right Arm",
-      "qubitIndex": 6
+      "qubitIndex": 6,
+      "spatialPosition": [-0.36, 0.605, 0.0]
     },
     {
       "id": "leftArm",
       "label": "Left Arm",
-      "qubitIndex": 7
+      "qubitIndex": 7,
+      "spatialPosition": [0.36, 0.605, 0.0]
     },
     {
       "id": "rightHand",
       "label": "Right Hand",
-      "qubitIndex": 8
+      "qubitIndex": 8,
+      "spatialPosition": [-0.43, 0.46, 0.22]
     },
     {
       "id": "leftHand",
       "label": "Left Hand",
-      "qubitIndex": 9
+      "qubitIndex": 9,
+      "spatialPosition": [0.43, 0.46, 0.22]
     },
     {
       "id": "rightLeg",
       "label": "Right Leg",
-      "qubitIndex": 10
+      "qubitIndex": 10,
+      "spatialPosition": [-0.13, 0.315, 0.0]
     },
     {
       "id": "leftLeg",
       "label": "Left Leg",
-      "qubitIndex": 11
+      "qubitIndex": 11,
+      "spatialPosition": [0.13, 0.315, 0.0]
     },
     {
       "id": "rightFoot",
       "label": "Right Foot",
-      "qubitIndex": 12
+      "qubitIndex": 12,
+      "spatialPosition": [-0.14, 0.04, 0.22]
     },
     {
       "id": "leftFoot",
       "label": "Left Foot",
-      "qubitIndex": 13
+      "qubitIndex": 13,
+      "spatialPosition": [0.14, 0.04, 0.22]
     }
   ],
   "entanglementLinks": [
     {
       "source": "head",
-      "target": "chest"
+      "target": "chest",
+      "strength": 0.88
     },
     {
       "source": "head",
-      "target": "oxygenTank"
+      "target": "oxygenTank",
+      "strength": 0.72
     },
     {
       "source": "chest",
-      "target": "torso"
+      "target": "torso",
+      "strength": 0.9
     },
     {
       "source": "chest",
-      "target": "oxygenTank"
+      "target": "oxygenTank",
+      "strength": 0.78
     },
     {
       "source": "chest",
-      "target": "rightShoulder"
+      "target": "rightShoulder",
+      "strength": 0.8
     },
     {
       "source": "chest",
-      "target": "leftShoulder"
+      "target": "leftShoulder",
+      "strength": 0.8
     },
     {
       "source": "torso",
-      "target": "oxygenTank"
+      "target": "oxygenTank",
+      "strength": 0.7
     },
     {
       "source": "torso",
-      "target": "rightLeg"
+      "target": "rightLeg",
+      "strength": 0.76
     },
     {
       "source": "torso",
-      "target": "leftLeg"
+      "target": "leftLeg",
+      "strength": 0.76
     },
     {
       "source": "oxygenTank",
-      "target": "rightShoulder"
+      "target": "rightShoulder",
+      "strength": 0.66
     },
     {
       "source": "oxygenTank",
-      "target": "leftShoulder"
+      "target": "leftShoulder",
+      "strength": 0.66
     },
     {
       "source": "rightShoulder",
-      "target": "rightArm"
+      "target": "rightArm",
+      "strength": 0.84
     },
     {
       "source": "leftShoulder",
-      "target": "leftArm"
+      "target": "leftArm",
+      "strength": 0.84
     },
     {
       "source": "rightArm",
-      "target": "rightHand"
+      "target": "rightHand",
+      "strength": 0.82
     },
     {
       "source": "leftArm",
-      "target": "leftHand"
+      "target": "leftHand",
+      "strength": 0.82
     },
     {
       "source": "rightLeg",
-      "target": "rightFoot"
+      "target": "rightFoot",
+      "strength": 0.8
     },
     {
       "source": "leftLeg",
-      "target": "leftFoot"
+      "target": "leftFoot",
+      "strength": 0.8
+    },
+    {
+      "source": "leftHand",
+      "target": "rightHand",
+      "strength": 0.62
+    },
+    {
+      "source": "head",
+      "target": "leftHand",
+      "strength": 0.42
+    },
+    {
+      "source": "head",
+      "target": "rightHand",
+      "strength": 0.42
     }
   ]
 }
