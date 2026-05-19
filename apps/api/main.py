@@ -22,4 +22,10 @@ def health() -> dict:
     return {"ok": True, "service": "api"}
 
 
+@app.get("/api/health")
+def api_health() -> dict:
+    return health()
+
+
 app.include_router(quantum_router)
+app.include_router(quantum_router, prefix="/api")
