@@ -19,7 +19,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True, "service": "api"}
+    return {"ok": True, "service": "api", "deployment": "api-auto-deploy-test"}
 
 
 @app.get("/api/health")
