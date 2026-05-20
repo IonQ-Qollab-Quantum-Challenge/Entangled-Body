@@ -81,7 +81,7 @@ const INSPECT_REGION_COPY: Partial<Record<BodyRegion, ModeCopy>> = {
     eyebrow: "Local Observation",
     title: "The Chamber of Resonance",
     metaphor:
-      "The torso holds the body like a resonant chamber. When it is inspected, the field answers from the center, where separate signals begin to feel connected.",
+      "The torso holds the body like a resonant chamber. When it is inspected, the field answers from the centerCENTER, where separate signals begin to feel connected.",
     science:
       "Torso inspection samples the qubit associated with the body's central region. Its probability and coherence are used to visualize how stable the local state remains under observation. It shows strong entanglement with adjacent regions including the head, arms, and legs, acting as the main bridge between local states.",
   },

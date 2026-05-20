@@ -19,7 +19,13 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True, "service": "api"}
+    return {"ok": True, "service": "api", "deployment": "api-auto-deploy-test"}
+
+
+@app.get("/api/health")
+def api_health() -> dict:
+    return health()
 
 
 app.include_router(quantum_router)
+app.include_router(quantum_router, prefix="/api")

@@ -2,16 +2,16 @@ project_name = "entangled-body"
 aws_region   = "us-east-1"
 
 # Private ECR example:
-# api_image_identifier      = "123456789012.dkr.ecr.us-east-1.amazonaws.com/entangled-body-api:latest"
-# api_image_repository_type = "ECR"
-# apprunner_access_role_arn = null
+ api_image_identifier      = "123456789012.dkr.ecr.us-east-1.amazonaws.com/entangled-body-api:latest"
+ api_image_repository_type = "ECR"
+ apprunner_access_role_arn = null
 
 # ECR Public example:
-api_image_identifier      = "public.ecr.aws/example/entangled-body-api:latest"
-api_image_repository_type = "ECR_PUBLIC"
+# api_image_identifier      = "public.ecr.aws/example/entangled-body-api:latest"
+# api_image_repository_type = "ECR_PUBLIC"
 
 # Optional custom domain managed in Route 53.
-# custom_domain_name        = "entangledbody.com"
+# custom_domain_name        = "example.com"
 # custom_domain_include_www = true
 # redirect_www_to_apex      = true
 
