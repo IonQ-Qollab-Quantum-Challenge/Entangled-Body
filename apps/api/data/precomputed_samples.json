@@ -1,77 +1,4320 @@
 {
-  "source": "precomputed",
+  "intensity": 0.45,
   "samples": {
+    "chest": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 487,
+        "00000000000010": 6,
+        "00000000111101": 11,
+        "00000000111111": 520
+      },
+      "dominantBitstring": "00000000111111",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 0.9834,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9834,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9834,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9834,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9834,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.518555,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.231152,
+          "coherence": 0.966797,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.513672,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.518555,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.518555,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.518555,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.518555,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.475586,
+        "00000000000010": 0.005859,
+        "00000000111101": 0.010742,
+        "00000000111111": 0.507812
+      },
+      "qubits": 14,
+      "region": "chest",
+      "regionStates": {
+        "chest": {
+          "activation": 0.231152,
+          "coherence": 0.966797,
+          "displacement": -0.027344
+        },
+        "head": {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "displacement": -0.037109
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "displacement": -0.037109
+        },
+        "oxygenTank": {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "displacement": -0.037109
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "displacement": -0.037109
+        },
+        "torso": {
+          "activation": 0.23335,
+          "coherence": 1.0,
+          "displacement": -0.037109
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
+    },
     "head": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 492,
+        "00000000000001": 8,
+        "00000000001010": 5,
+        "00000000001011": 519
+      },
+      "dominantBitstring": "00000000001011",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 0.9873,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 0.9873,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.231592,
+          "coherence": 0.974609,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.514648,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.230274,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.511719,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.230274,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.511719,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.480469,
+        "00000000000001": 0.007812,
+        "00000000001010": 0.004883,
+        "00000000001011": 0.506836
+      },
+      "qubits": 14,
       "region": "head",
       "regionStates": {
-        "head": { "activation": 0.54, "coherence": 0.48, "displacement": 0.1 },
-        "torso": { "activation": 0.28, "coherence": 0.34, "displacement": 0.04 },
-        "leftArm": { "activation": 0.16, "coherence": 0.22, "displacement": -0.02 },
-        "rightArm": { "activation": 0.16, "coherence": 0.22, "displacement": 0.02 },
-        "leftLeg": { "activation": 0.1, "coherence": 0.18, "displacement": -0.03 },
-        "rightLeg": { "activation": 0.1, "coherence": 0.18, "displacement": 0.03 }
+        "chest": {
+          "activation": 0.230274,
+          "coherence": 1.0,
+          "displacement": -0.023438
+        },
+        "head": {
+          "activation": 0.231592,
+          "coherence": 0.974609,
+          "displacement": -0.029297
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.230274,
+          "coherence": 1.0,
+          "displacement": -0.023438
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
       },
-      "entanglementLinks": [{ "source": "head", "target": "torso", "strength": 0.41 }]
-    },
-    "torso": {
-      "region": "torso",
-      "regionStates": {
-        "head": { "activation": 0.22, "coherence": 0.34, "displacement": 0.02 },
-        "torso": { "activation": 0.58, "coherence": 0.52, "displacement": 0.08 },
-        "leftArm": { "activation": 0.24, "coherence": 0.32, "displacement": -0.05 },
-        "rightArm": { "activation": 0.24, "coherence": 0.32, "displacement": 0.05 },
-        "leftLeg": { "activation": 0.18, "coherence": 0.26, "displacement": -0.03 },
-        "rightLeg": { "activation": 0.18, "coherence": 0.26, "displacement": 0.03 }
-      },
-      "entanglementLinks": [{ "source": "torso", "target": "leftArm", "strength": 0.34 }, { "source": "torso", "target": "rightLeg", "strength": 0.32 }]
+      "shots": 1024,
+      "source": "aer"
     },
     "leftArm": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 503,
+        "00000010000000": 9,
+        "00001000100000": 6,
+        "00001010100000": 506
+      },
+      "dominantBitstring": "00001010100000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 0.9854,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 0.9854,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.225,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.5,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.226319,
+          "coherence": 0.970703,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.50293,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.225,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.5,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.491211,
+        "00000010000000": 0.008789,
+        "00001000100000": 0.005859,
+        "00001010100000": 0.494141
+      },
+      "qubits": 14,
       "region": "leftArm",
       "regionStates": {
-        "head": { "activation": 0.12, "coherence": 0.2, "displacement": 0.0 },
-        "torso": { "activation": 0.25, "coherence": 0.31, "displacement": -0.03 },
-        "leftArm": { "activation": 0.56, "coherence": 0.46, "displacement": -0.12 },
-        "rightArm": { "activation": 0.3, "coherence": 0.36, "displacement": 0.08 },
-        "leftLeg": { "activation": 0.12, "coherence": 0.18, "displacement": -0.02 },
-        "rightLeg": { "activation": 0.1, "coherence": 0.18, "displacement": 0.02 }
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.226319,
+          "coherence": 0.970703,
+          "displacement": -0.005859
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.225,
+          "coherence": 1.0,
+          "displacement": 0.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.225,
+          "coherence": 1.0,
+          "displacement": 0.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
       },
-      "entanglementLinks": [{ "source": "leftArm", "target": "rightArm", "strength": 0.42 }]
+      "shots": 1024,
+      "source": "aer"
     },
-    "rightArm": {
-      "region": "rightArm",
-      "regionStates": {
-        "head": { "activation": 0.12, "coherence": 0.2, "displacement": 0.0 },
-        "torso": { "activation": 0.25, "coherence": 0.31, "displacement": 0.03 },
-        "leftArm": { "activation": 0.3, "coherence": 0.36, "displacement": -0.08 },
-        "rightArm": { "activation": 0.56, "coherence": 0.46, "displacement": 0.12 },
-        "leftLeg": { "activation": 0.1, "coherence": 0.18, "displacement": -0.02 },
-        "rightLeg": { "activation": 0.12, "coherence": 0.18, "displacement": 0.02 }
+    "leftFoot": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 486,
+        "00100000000000": 9,
+        "10000000000000": 4,
+        "10100000000000": 525
       },
-      "entanglementLinks": [{ "source": "leftArm", "target": "rightArm", "strength": 0.42 }]
+      "dominantBitstring": "10100000000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9873,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 0.9746,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.234668,
+          "coherence": 0.974609,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.521484,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.232471,
+          "coherence": 0.974609,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.516602,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.474609,
+        "00100000000000": 0.008789,
+        "10000000000000": 0.003906,
+        "10100000000000": 0.512695
+      },
+      "qubits": 14,
+      "region": "leftFoot",
+      "regionStates": {
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.232471,
+          "coherence": 0.974609,
+          "displacement": -0.033203
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.234668,
+          "coherence": 0.974609,
+          "displacement": -0.042969
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
+    },
+    "leftHand": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 510,
+        "00000010000000": 5,
+        "00001000000000": 13,
+        "00001010000000": 496
+      },
+      "dominantBitstring": "00000000000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 0.9824,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 0.9648,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.220166,
+          "coherence": 0.964844,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.510742,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.223682,
+          "coherence": 0.964844,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.50293,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.498047,
+        "00000010000000": 0.004883,
+        "00001000000000": 0.012695,
+        "00001010000000": 0.484375
+      },
+      "qubits": 14,
+      "region": "leftHand",
+      "regionStates": {
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.220166,
+          "coherence": 0.964844,
+          "displacement": 0.021484
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.223682,
+          "coherence": 0.964844,
+          "displacement": 0.005859
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
     },
     "leftLeg": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 491,
+        "00100000000000": 6,
+        "10000000000100": 8,
+        "10100000000100": 519
+      },
+      "dominantBitstring": "10100000000100",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9863,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 0.9863,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.231592,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.514648,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.230713,
+          "coherence": 0.972656,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.512695,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.231592,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.514648,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.479492,
+        "00100000000000": 0.005859,
+        "10000000000100": 0.007812,
+        "10100000000100": 0.506836
+      },
+      "qubits": 14,
       "region": "leftLeg",
       "regionStates": {
-        "head": { "activation": 0.08, "coherence": 0.16, "displacement": 0.0 },
-        "torso": { "activation": 0.18, "coherence": 0.26, "displacement": -0.02 },
-        "leftArm": { "activation": 0.12, "coherence": 0.18, "displacement": -0.02 },
-        "rightArm": { "activation": 0.1, "coherence": 0.18, "displacement": 0.02 },
-        "leftLeg": { "activation": 0.52, "coherence": 0.44, "displacement": -0.14 },
-        "rightLeg": { "activation": 0.3, "coherence": 0.35, "displacement": 0.1 }
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.231592,
+          "coherence": 1.0,
+          "displacement": -0.029297
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.230713,
+          "coherence": 0.972656,
+          "displacement": -0.025391
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.231592,
+          "coherence": 1.0,
+          "displacement": -0.029297
+        }
       },
-      "entanglementLinks": [{ "source": "leftLeg", "target": "rightLeg", "strength": 0.4 }]
+      "shots": 1024,
+      "source": "aer"
+    },
+    "leftShoulder": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 506,
+        "00000000100000": 5,
+        "00000010001010": 13,
+        "00000010101010": 500
+      },
+      "dominantBitstring": "00000000000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9824,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 0.9824,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 0.9824,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.22544,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.499023,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.22544,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.499023,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.221924,
+          "coherence": 0.964844,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.506836,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.22544,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.499023,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.494141,
+        "00000000100000": 0.004883,
+        "00000010001010": 0.012695,
+        "00000010101010": 0.488281
+      },
+      "qubits": 14,
+      "region": "leftShoulder",
+      "regionStates": {
+        "chest": {
+          "activation": 0.22544,
+          "coherence": 1.0,
+          "displacement": -0.001953
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.22544,
+          "coherence": 1.0,
+          "displacement": -0.001953
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.221924,
+          "coherence": 0.964844,
+          "displacement": 0.013672
+        },
+        "oxygenTank": {
+          "activation": 0.22544,
+          "coherence": 1.0,
+          "displacement": -0.001953
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
+    },
+    "oxygenTank": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 530,
+        "00000000001000": 9,
+        "00000000110111": 8,
+        "00000000111111": 477
+      },
+      "dominantBitstring": "00000000000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 0.9834,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9834,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9834,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 0.9834,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 0.9834,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.526367,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.526367,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.526367,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.213574,
+          "coherence": 0.966797,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.525391,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.526367,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.526367,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.517578,
+        "00000000001000": 0.008789,
+        "00000000110111": 0.007812,
+        "00000000111111": 0.46582
+      },
+      "qubits": 14,
+      "region": "oxygenTank",
+      "regionStates": {
+        "chest": {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "displacement": 0.052734
+        },
+        "head": {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "displacement": 0.052734
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "displacement": 0.052734
+        },
+        "oxygenTank": {
+          "activation": 0.213574,
+          "coherence": 0.966797,
+          "displacement": 0.050781
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "displacement": 0.052734
+        },
+        "torso": {
+          "activation": 0.213135,
+          "coherence": 1.0,
+          "displacement": 0.052734
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
+    },
+    "rightArm": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 514,
+        "00000001000000": 8,
+        "00000100010000": 6,
+        "00000101010000": 496
+      },
+      "dominantBitstring": "00000000000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 0.9863,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 0.9863,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.220605,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.509766,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.221485,
+          "coherence": 0.972656,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.507812,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.220605,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.509766,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.501953,
+        "00000001000000": 0.007812,
+        "00000100010000": 0.005859,
+        "00000101010000": 0.484375
+      },
+      "qubits": 14,
+      "region": "rightArm",
+      "regionStates": {
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.221485,
+          "coherence": 0.972656,
+          "displacement": 0.015625
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.220605,
+          "coherence": 1.0,
+          "displacement": 0.019531
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.220605,
+          "coherence": 1.0,
+          "displacement": 0.019531
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
+    },
+    "rightFoot": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 516,
+        "00010000000000": 8,
+        "01000000000000": 6,
+        "01010000000000": 494
+      },
+      "dominantBitstring": "00000000000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9863,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 0.9727,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.220605,
+          "coherence": 0.972656,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.509766,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.219726,
+          "coherence": 0.972656,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.511719,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.503906,
+        "00010000000000": 0.007812,
+        "01000000000000": 0.005859,
+        "01010000000000": 0.482422
+      },
+      "qubits": 14,
+      "region": "rightFoot",
+      "regionStates": {
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.219726,
+          "coherence": 0.972656,
+          "displacement": 0.023438
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.220605,
+          "coherence": 0.972656,
+          "displacement": 0.019531
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
+    },
+    "rightHand": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 495,
+        "00000001000000": 9,
+        "00000100000000": 7,
+        "00000101000000": 513
+      },
+      "dominantBitstring": "00000101000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 0.9844,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 0.9688,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.229395,
+          "coherence": 0.96875,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.509766,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.228515,
+          "coherence": 0.96875,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.507812,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.483398,
+        "00000001000000": 0.008789,
+        "00000100000000": 0.006836,
+        "00000101000000": 0.500977
+      },
+      "qubits": 14,
+      "region": "rightHand",
+      "regionStates": {
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.229395,
+          "coherence": 0.96875,
+          "displacement": -0.019531
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.228515,
+          "coherence": 0.96875,
+          "displacement": -0.015625
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
     },
     "rightLeg": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 475,
+        "00010000000000": 9,
+        "01000000000100": 13,
+        "01010000000100": 527
+      },
+      "dominantBitstring": "01010000000100",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9785,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 0.9785,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.237305,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.527344,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.235547,
+          "coherence": 0.957031,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.523438,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.237305,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.527344,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.463867,
+        "00010000000000": 0.008789,
+        "01000000000100": 0.012695,
+        "01010000000100": 0.514648
+      },
+      "qubits": 14,
       "region": "rightLeg",
       "regionStates": {
-        "head": { "activation": 0.08, "coherence": 0.16, "displacement": 0.0 },
-        "torso": { "activation": 0.18, "coherence": 0.26, "displacement": 0.02 },
-        "leftArm": { "activation": 0.1, "coherence": 0.18, "displacement": -0.02 },
-        "rightArm": { "activation": 0.12, "coherence": 0.18, "displacement": 0.02 },
-        "leftLeg": { "activation": 0.3, "coherence": 0.35, "displacement": -0.1 },
-        "rightLeg": { "activation": 0.52, "coherence": 0.44, "displacement": 0.14 }
+        "chest": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.237305,
+          "coherence": 1.0,
+          "displacement": -0.054688
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.235547,
+          "coherence": 0.957031,
+          "displacement": -0.046875
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.237305,
+          "coherence": 1.0,
+          "displacement": -0.054688
+        }
       },
-      "entanglementLinks": [{ "source": "leftLeg", "target": "rightLeg", "strength": 0.4 }]
+      "shots": 1024,
+      "source": "aer"
+    },
+    "rightShoulder": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 519,
+        "00000000010000": 8,
+        "00000001001010": 8,
+        "00000001011010": 489
+      },
+      "dominantBitstring": "00000000000000",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9844,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 1.0,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 0.9844,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 0.9844,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.218408,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.514648,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.218408,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.514648,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.218408,
+          "coherence": 0.96875,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.514648,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.218408,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 0.514648,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.506836,
+        "00000000010000": 0.007812,
+        "00000001001010": 0.007812,
+        "00000001011010": 0.477539
+      },
+      "qubits": 14,
+      "region": "rightShoulder",
+      "regionStates": {
+        "chest": {
+          "activation": 0.218408,
+          "coherence": 1.0,
+          "displacement": 0.029297
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.218408,
+          "coherence": 1.0,
+          "displacement": 0.029297
+        },
+        "rightArm": {
+          "activation": 0.218408,
+          "coherence": 1.0,
+          "displacement": 0.029297
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightShoulder": {
+          "activation": 0.218408,
+          "coherence": 0.96875,
+          "displacement": 0.029297
+        },
+        "torso": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
+    },
+    "torso": {
+      "backend": "aer",
+      "circuitType": "local_probe",
+      "counts": {
+        "00000000000000": 494,
+        "00000000000100": 9,
+        "00110000001010": 11,
+        "00110000001110": 510
+      },
+      "dominantBitstring": "00110000001110",
+      "entanglementLinks": [
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "chest"
+        },
+        {
+          "source": "head",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 0.9805,
+          "target": "torso"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "chest",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9805,
+          "target": "oxygenTank"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9805,
+          "target": "rightLeg"
+        },
+        {
+          "source": "torso",
+          "strength": 0.9805,
+          "target": "leftLeg"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "rightShoulder"
+        },
+        {
+          "source": "oxygenTank",
+          "strength": 1.0,
+          "target": "leftShoulder"
+        },
+        {
+          "source": "rightShoulder",
+          "strength": 1.0,
+          "target": "rightArm"
+        },
+        {
+          "source": "leftShoulder",
+          "strength": 1.0,
+          "target": "leftArm"
+        },
+        {
+          "source": "rightArm",
+          "strength": 1.0,
+          "target": "rightHand"
+        },
+        {
+          "source": "leftArm",
+          "strength": 1.0,
+          "target": "leftHand"
+        },
+        {
+          "source": "rightLeg",
+          "strength": 1.0,
+          "target": "rightFoot"
+        },
+        {
+          "source": "leftLeg",
+          "strength": 1.0,
+          "target": "leftFoot"
+        }
+      ],
+      "nodeStates": [
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 0,
+          "region": "head"
+        },
+        {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.508789,
+          "qubitIndex": 1,
+          "region": "chest"
+        },
+        {
+          "activation": 0.228076,
+          "coherence": 0.960938,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.506836,
+          "qubitIndex": 2,
+          "region": "torso"
+        },
+        {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.508789,
+          "qubitIndex": 3,
+          "region": "oxygenTank"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 4,
+          "region": "rightShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 5,
+          "region": "leftShoulder"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 6,
+          "region": "rightArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 7,
+          "region": "leftArm"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 8,
+          "region": "rightHand"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 9,
+          "region": "leftHand"
+        },
+        {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.508789,
+          "qubitIndex": 10,
+          "region": "rightLeg"
+        },
+        {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "1",
+          "probability": 0.508789,
+          "qubitIndex": 11,
+          "region": "leftLeg"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 12,
+          "region": "rightFoot"
+        },
+        {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "collapsed": false,
+          "measuredBit": "0",
+          "probability": 1.0,
+          "qubitIndex": 13,
+          "region": "leftFoot"
+        }
+      ],
+      "probabilities": {
+        "00000000000000": 0.482422,
+        "00000000000100": 0.008789,
+        "00110000001010": 0.010742,
+        "00110000001110": 0.498047
+      },
+      "qubits": 14,
+      "region": "torso",
+      "regionStates": {
+        "chest": {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "displacement": -0.017578
+        },
+        "head": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "leftLeg": {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "displacement": -0.017578
+        },
+        "leftShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "oxygenTank": {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "displacement": -0.017578
+        },
+        "rightArm": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightFoot": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightHand": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "rightLeg": {
+          "activation": 0.228955,
+          "coherence": 1.0,
+          "displacement": -0.017578
+        },
+        "rightShoulder": {
+          "activation": 0.0,
+          "coherence": 1.0,
+          "displacement": 1.0
+        },
+        "torso": {
+          "activation": 0.228076,
+          "coherence": 0.960938,
+          "displacement": -0.013672
+        }
+      },
+      "shots": 1024,
+      "source": "aer"
     }
-  }
+  },
+  "shots": 1024,
+  "source": "precomputed",
+  "version": 1
 }

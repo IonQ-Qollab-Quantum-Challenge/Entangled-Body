@@ -1,0 +1,72 @@
+name: Deploy API
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY }}:latest
+            ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Wait for App Runner deployment
+        run: |
+          for attempt in {1..60}; do
+            status="$(aws apprunner describe-service \
+              --service-arn "${{ vars.APP_RUNNER_SERVICE_ARN }}" \
+              --query 'Service.Status' \
+              --output text)"
+
+            echo "App Runner status: ${status}"
+
+            if [ "${status}" = "RUNNING" ]; then
+              exit 0
+            fi
+
+            if [ "${status}" = "CREATE_FAILED" ] || [ "${status}" = "DELETE_FAILED" ]; then
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for App Runner to return to RUNNING."
+          exit 1

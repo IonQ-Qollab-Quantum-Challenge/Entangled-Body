@@ -19,6 +19,13 @@ button {
   font: inherit;
 }
 
+.scene-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
 .background-music {
   position: fixed;
   left: 0;
@@ -163,10 +170,10 @@ button {
 
 .scene-status {
   position: fixed;
-  left: 24px;
+  left: 8px;
   bottom: 24px;
   z-index: 22;
-  max-width: min(520px, calc(100vw - 48px));
+  max-width: 520px;
   padding: 10px 12px;
   border: 1px solid rgba(255, 93, 122, 0.28);
   border-radius: 6px;
@@ -177,16 +184,32 @@ button {
   backdrop-filter: blur(12px);
 }
 
-.scene-mode-switch {
+.scene-left-controls {
   position: fixed;
-  left: 24px;
+  left: 8px;
+  top: 20px;
+  z-index: 34;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  transform-origin: top left;
+}
+
+.scene-dashboard-shell {
+  position: fixed;
+  right: 24px;
   top: 24px;
-  z-index: 22;
+  z-index: 32;
+  width: 380px;
+  transform-origin: top right;
+}
+
+.scene-mode-switch {
   display: inline-grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  width: 270px;
-  padding: 4px;
+  gap: 5px;
+  width: 320px;
+  padding: 5px;
   border: 1px solid rgba(196, 223, 255, 0.18);
   border-radius: 8px;
   background: rgba(9, 14, 21, 0.72);
@@ -194,13 +217,13 @@ button {
 }
 
 .scene-mode-switch__button {
-  min-height: 38px;
+  min-height: 46px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: rgba(245, 247, 251, 0.68);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
 }
 
@@ -211,14 +234,10 @@ button {
 }
 
 .music-toggle {
-  position: fixed;
-  left: 306px;
-  top: 24px;
-  z-index: 22;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 58px;
+  height: 58px;
   border: 1px solid rgba(196, 223, 255, 0.18);
   border-radius: 8px;
   background: rgba(9, 14, 21, 0.72);
@@ -242,16 +261,16 @@ button {
 
 .music-toggle__icon {
   position: relative;
-  width: 22px;
-  height: 20px;
+  width: 28px;
+  height: 26px;
 }
 
 .music-toggle__icon::before {
   position: absolute;
   left: 1px;
-  top: 6px;
-  width: 7px;
-  height: 8px;
+  top: 8px;
+  width: 9px;
+  height: 10px;
   border-radius: 2px 0 0 2px;
   background: currentColor;
   content: "";
@@ -259,41 +278,41 @@ button {
 
 .music-toggle__icon::after {
   position: absolute;
-  left: 7px;
-  top: 3px;
+  left: 9px;
+  top: 4px;
   width: 0;
   height: 0;
-  border-top: 7px solid transparent;
-  border-right: 10px solid currentColor;
-  border-bottom: 7px solid transparent;
+  border-top: 9px solid transparent;
+  border-right: 13px solid currentColor;
+  border-bottom: 9px solid transparent;
   content: "";
 }
 
 .music-toggle--playing .music-toggle__icon {
-  border-right: 2px solid currentColor;
+  border-right: 3px solid currentColor;
   border-radius: 50%;
 }
 
 .music-toggle--playing .music-toggle__icon::before {
-  box-shadow: 13px 1px 0 -5px currentColor;
+  box-shadow: 17px 2px 0 -7px currentColor;
 }
 
 .music-toggle:not(.music-toggle--playing) .music-toggle__icon {
-  transform: translateX(-1px);
+  transform: translateX(-2px);
 }
 
 .music-toggle:not(.music-toggle--playing) .music-toggle__icon::before {
-  box-shadow: 15px 0 0 -6px #ff5d7a;
+  box-shadow: 20px 0 0 -8px #ff5d7a;
 }
 
 .music-toggle:not(.music-toggle--playing) .music-toggle__icon::after {
-  box-shadow: 9px 0 0 -7px #ff5d7a;
+  box-shadow: 12px 0 0 -9px #ff5d7a;
 }
 
 .music-toggle:not(.music-toggle--playing)::after {
   position: absolute;
-  width: 24px;
-  height: 2px;
+  width: 32px;
+  height: 3px;
   border-radius: 999px;
   background: #ff5d7a;
   content: "";
@@ -301,12 +320,9 @@ button {
 }
 
 .quantum-dashboard {
-  position: fixed;
-  right: 24px;
-  top: 24px;
-  z-index: 20;
-  width: min(380px, calc(100vw - 32px));
-  max-height: calc(100vh - 48px);
+  position: relative;
+  width: 380px;
+  max-height: 852px;
   overflow: auto;
   padding: 16px;
   border: 1px solid rgba(196, 223, 255, 0.2);
@@ -762,53 +778,38 @@ button {
 
 @media (max-width: 920px) {
   .scene-status {
-    left: 16px;
-    bottom: calc(48vh + 28px);
-    max-width: calc(100vw - 32px);
+    left: 8px;
+    bottom: 24px;
+    max-width: 520px;
   }
 
-  .scene-mode-switch {
-    left: 16px;
-    top: auto;
-    bottom: calc(48vh + 28px);
-    width: min(270px, calc(100vw - 32px));
+  .scene-left-controls {
+    left: 8px;
+    top: 16px;
   }
 
-  .music-toggle {
-    left: auto;
+  .scene-dashboard-shell {
     right: 16px;
     top: 16px;
-    width: 42px;
-    height: 42px;
-  }
-
-  .quantum-dashboard {
-    left: 16px;
-    right: 16px;
-    top: auto;
-    bottom: 16px;
-    width: auto;
-    max-height: 48vh;
-    transform-origin: bottom center;
   }
 
   .quantum-dashboard--hidden {
-    transform: translate3d(0, 28px, 0);
+    transform: translate3d(34px, 0, 0);
   }
 
   .quantum-node-overlay {
-    top: 36%;
-    width: min(330px, 86vw);
-    height: 44vh;
+    top: 52%;
+    width: 420px;
+    height: 640px;
   }
 
   .quantum-node-overlay__node {
-    width: 48px;
-    height: 48px;
+    width: 58px;
+    height: 58px;
   }
 
   .quantum-node-overlay__bit {
-    font-size: 18px;
+    font-size: 21px;
   }
 
   .loading-intro__copy {

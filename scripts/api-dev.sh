@@ -3,4 +3,4 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-exec node "$ROOT_DIR/scripts/setup.mjs"
+exec node "$ROOT_DIR/scripts/api-dev.mjs"

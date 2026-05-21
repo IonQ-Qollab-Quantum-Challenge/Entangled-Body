@@ -1,6 +1,21 @@
 import type { Vector3Tuple } from "three";
 
-export const BODY_REGIONS = ["head", "torso", "leftArm", "rightArm", "leftLeg", "rightLeg"] as const;
+export const BODY_REGIONS = [
+  "head",
+  "chest",
+  "torso",
+  "oxygenTank",
+  "rightShoulder",
+  "leftShoulder",
+  "rightArm",
+  "leftArm",
+  "rightHand",
+  "leftHand",
+  "rightLeg",
+  "leftLeg",
+  "rightFoot",
+  "leftFoot",
+] as const;
 
 export type BodyRegion = (typeof BODY_REGIONS)[number];
 
@@ -60,11 +75,19 @@ export function isBodyRegion(value: string): value is BodyRegion {
 export function normalizeRegionName(name: string): BodyRegion | null {
   const normalized = name.toLowerCase();
   if (normalized.includes("head") || normalized.includes("helmet")) return "head";
+  if (normalized.includes("chest")) return "chest";
+  if (normalized.includes("oxygen") || normalized.includes("tank")) return "oxygenTank";
+  if (normalized.includes("right") && normalized.includes("shoulder")) return "rightShoulder";
+  if (normalized.includes("left") && normalized.includes("shoulder")) return "leftShoulder";
+  if (normalized.includes("right") && normalized.includes("hand")) return "rightHand";
+  if (normalized.includes("left") && normalized.includes("hand")) return "leftHand";
+  if (normalized.includes("right") && normalized.includes("foot")) return "rightFoot";
+  if (normalized.includes("left") && normalized.includes("foot")) return "leftFoot";
   if (normalized.includes("torso") || normalized.includes("spine") || normalized.includes("chest")) return "torso";
-  if (normalized.includes("left") && (normalized.includes("arm") || normalized.includes("hand"))) return "leftArm";
-  if (normalized.includes("right") && (normalized.includes("arm") || normalized.includes("hand"))) return "rightArm";
-  if (normalized.includes("left") && (normalized.includes("leg") || normalized.includes("foot"))) return "leftLeg";
-  if (normalized.includes("right") && (normalized.includes("leg") || normalized.includes("foot"))) return "rightLeg";
+  if (normalized.includes("left") && normalized.includes("arm")) return "leftArm";
+  if (normalized.includes("right") && normalized.includes("arm")) return "rightArm";
+  if (normalized.includes("left") && normalized.includes("leg")) return "leftLeg";
+  if (normalized.includes("right") && normalized.includes("leg")) return "rightLeg";
   return null;
 }
 
