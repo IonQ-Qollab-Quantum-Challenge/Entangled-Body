@@ -20,6 +20,8 @@ const NERVOUS_LINE_RADIUS = 0.72;
 const NERVOUS_PATH_RADIUS = 0.2;
 const NERVOUS_TRUNK_SEGMENTS = 12;
 const HOVER_COLOR_RADIUS = 0.72;
+const BODY_REGION_COUNT = 14;
+const emptyZeroBitRegionMask = new Float32Array(BODY_REGION_COUNT);
 
 type OriginalGlbModelProps = {
   modelUrl: string;
@@ -28,6 +30,7 @@ type OriginalGlbModelProps = {
   onHoverRegion: (region: BodyRegion | null, point?: Vector3Tuple) => void;
   onMeasureRegion: (region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => void;
   onGlobalCollapse: () => void;
+  zeroBitRegions?: BodyRegion[];
   onReady?: () => void;
   stable: boolean;
   stablePoint: Vector3Tuple | null;
@@ -61,13 +64,13 @@ type WaveMaterialBinding = {
 
 type WaveMaterial = Material & {
   userData: {
-    entangledUniforms?: Record<string, { value: number | Vector3 }>;
+    entangledUniforms?: Record<string, { value: number | Vector3 | Float32Array }>;
   };
 };
 
 type MaskedPointMaterial = PointsMaterial & {
   userData: {
-    hoverMaskUniforms?: Record<string, { value: number | Vector3 }>;
+    hoverMaskUniforms?: Record<string, { value: number | Vector3 | Float32Array }>;
   };
 };
 
@@ -147,6 +150,7 @@ export function OriginalGlbModel({
   onHoverRegion,
   onMeasureRegion,
   onGlobalCollapse,
+  zeroBitRegions = [],
   onReady,
   stable,
   stablePoint,
@@ -179,11 +183,12 @@ export function OriginalGlbModel({
       const bindings: WaveMaterialBinding[] = [];
 
       scene.traverse((object) => {
-        object.frustumCulled = false;
-        const mesh = object as Mesh;
-        if (!mesh.isMesh || !mesh.material) return;
+	        object.frustumCulled = false;
+	        const mesh = object as Mesh;
+	        if (!mesh.isMesh || !mesh.material) return;
+        applyBodyRegionAttribute(mesh);
 
-        if (Array.isArray(mesh.material)) {
+	        if (Array.isArray(mesh.material)) {
           mesh.material = mesh.material.map((material) => prepareMaterial(material, opacity));
           for (const material of mesh.material) {
             bindings.push({ mesh, material });
@@ -249,14 +254,16 @@ export function OriginalGlbModel({
     const hasHoverPoint = !stable && hoveredPoint ? 1 : 0;
     const hasStablePoint = stable && stablePoint ? 1 : 0;
     const surfaceInteractionPoint = stable && stablePoint ? stablePoint : hoveredPoint;
+    const zeroBitRegionMask = stable ? buildZeroBitRegionMask(zeroBitRegions) : emptyZeroBitRegionMask;
 
     updateSurfaceGlowPointColors(model.surfaceGlowPointGeometry, model.scene, surfaceInteractionPoint);
-    updateMaskedPointMaterial(surfaceGlowMaterial, surfaceInteractionPoint, model.scene, surfaceGlowOpacityForFrame(stable, stableProgress, hoveredPoint, stablePoint));
-    updateMaskedPointMaterial(surfacePointMaterial, surfaceInteractionPoint, model.scene, surfacePointOpacityForFrame(stable, stableProgress, hoveredPoint, stablePoint));
+    updateMaskedPointMaterial(surfaceGlowMaterial, surfaceInteractionPoint, model.scene, surfaceGlowOpacityForFrame(hoveredPoint, stablePoint), stable, stableProgress, zeroBitRegionMask);
+    updateMaskedPointMaterial(surfacePointMaterial, surfaceInteractionPoint, model.scene, surfacePointOpacityForFrame(hoveredPoint, stablePoint), stable, stableProgress, zeroBitRegionMask);
     for (const binding of model.bindings) {
       const material = binding.material;
-      material.opacity = effectiveOpacity;
-      material.transparent = !revealComplete;
+      material.opacity = zeroBitRegions.length > 0 ? Math.max(0.07, Math.min(0.42, opacity + breath * 0.028)) : effectiveOpacity;
+      material.transparent = zeroBitRegions.length > 0 || !revealComplete;
+      material.alphaHash = false;
       material.depthWrite = true;
       material.needsUpdate = true;
       const uniforms = material.userData.entangledUniforms;
@@ -280,14 +287,16 @@ export function OriginalGlbModel({
       uniforms.uHasStablePoint.value = hasStablePoint;
       uniforms.uStablePoint.value = localStable;
       uniforms.uStableProgress.value = stableProgress;
-      uniforms.uWaveStrength.value = effectiveWaveStrength;
+      uniforms.uWaveStrength.value = zeroBitRegions.length > 0 ? waveStrength : effectiveWaveStrength;
       uniforms.uBaseOpacity.value = material.opacity;
+      uniforms.uExcludedRegionMask.value = zeroBitRegionMask;
     }
   });
 
   if (!model) return null;
 
   const surfaceFade = stable ? 1 - smoothstep(0.08, 0.82, stableProgress) : 1;
+  const keepMaskedSurfacePoints = stable && zeroBitRegions.length > 0;
   const activeFixedPointSource = connectionBreakPoint ?? (stable && stablePoint ? stablePoint : hoveredPoint);
   const showFullEntanglement = Boolean(hoveredPoint || connectionBreakPoint || stablePoint);
   const disconnectEntanglement = Boolean(connectionBreakPoint);
@@ -312,7 +321,7 @@ export function OriginalGlbModel({
 
   return (
     <group position={model.position} scale={model.scale}>
-      {surfaceFade > 0.001 ? (
+      {surfaceFade > 0.001 || keepMaskedSurfacePoints ? (
         <>
           <points geometry={model.surfaceGlowPointGeometry} frustumCulled={false} renderOrder={3} raycast={ignorePointRaycast}>
             <primitive object={surfaceGlowMaterial} attach="material" />
@@ -420,26 +429,27 @@ function getFixedRegionPoints(model: LoadedModel): FixedRegionPoint[] {
   const depth = Math.max(0.001, model.maxZ - model.minZ);
   const centerX = (model.minX + model.maxX) * 0.5;
   const centerZ = (model.minZ + model.maxZ) * 0.5;
-  const frontZ = centerZ + depth * 0.22;
-  const backZ = centerZ - depth * 0.24;
-  const y = (ratio: number, offset = 0) => model.minY + height * (ratio + 0.035 + offset);
-  const x = (ratio: number) => centerX + width * ratio;
+  const point = (xRatio: number, yRatio: number, zRatio: number): [number, number, number] => [
+    centerX + width * xRatio,
+    model.minY + height * yRatio,
+    centerZ + depth * zRatio,
+  ];
 
   return [
-    { label: "node0", position: [centerX, y(0.86), frontZ] },
-    { label: "node1", position: [centerX, y(0.66), frontZ] },
-    { label: "node2", position: [centerX, y(0.52), frontZ] },
-    { label: "node3", position: [centerX, y(0.61), backZ] },
-    { label: "node4", position: [x(-0.23), y(0.7), centerZ] },
-    { label: "node5", position: [x(0.23), y(0.7), centerZ] },
-    { label: "node6", position: [x(-0.36), y(0.57), centerZ] },
-    { label: "node7", position: [x(0.36), y(0.57), centerZ] },
-    { label: "node8", position: [x(-0.43), y(0.39, 0.035), frontZ] },
-    { label: "node9", position: [x(0.43), y(0.39, 0.035), frontZ] },
-    { label: "node10", position: [x(-0.13), y(0.28), centerZ] },
-    { label: "node11", position: [x(0.13), y(0.28), centerZ] },
-    { label: "node12", position: [x(-0.14), y(0.04, -0.035), frontZ] },
-    { label: "node13", position: [x(0.14), y(0.04, -0.035), frontZ] },
+    { label: "node0", position: point(0, 0.903, 0.220) },
+    { label: "node1", position: point(0, 0.733, 0.214) },
+    { label: "node2", position: point(0, 0.570, 0.208) },
+    { label: "node3", position: point(0, 0.721, -0.234) },
+    { label: "node4", position: point(-0.31, 0.766, 0.12) },
+    { label: "node5", position: point(0.31, 0.765, 0.12) },
+    { label: "node6", position: point(-0.391, 0.639, 0.126) },
+    { label: "node7", position: point(0.392, 0.637, 0.129) },
+    { label: "node8", position: point(-0.407, 0.483, 0.191) },
+    { label: "node9", position: point(0.406, 0.476, 0.149) },
+    { label: "node10", position: point(-0.099, 0.414, 0.175) },
+    { label: "node11", position: point(0.099, 0.414, 0.175) },
+    { label: "node12", position: point(-0.111, 0.033, 0.258) },
+    { label: "node13", position: point(0.111, 0.033, 0.258) },
   ];
 }
 
@@ -637,10 +647,12 @@ function distanceSqBetweenFixedPoints(left: FixedRegionPoint, right: FixedRegion
 
 function sampleSurfaceGeometry(scene: Object3D, pointCount: number): { pointGeometry: BufferGeometry; glowPointGeometry: BufferGeometry; lineGeometry: BufferGeometry } {
   scene.updateMatrixWorld(true);
+  const sceneBox = new Box3().setFromObject(scene);
   const sources = collectSurfaceSources(scene).map((mesh) => bakeSurfaceSource(scene, mesh));
   const totalWeight = sources.reduce((sum, source) => sum + source.weight, 0) || 1;
   const positions: number[] = [];
   const colors: number[] = [];
+  const bodyRegionIds: number[] = [];
   const target = new Vector3();
   const normal = new Vector3();
 
@@ -649,11 +661,12 @@ function sampleSurfaceGeometry(scene: Object3D, pointCount: number): { pointGeom
     const sampler = new MeshSurfaceSampler(source.bakedMesh).build();
 
     for (let index = 0; index < count && positions.length / 3 < pointCount; index += 1) {
-      sampler.sample(target, normal);
-      target.addScaledVector(normal, SURFACE_POINT_OFFSET);
-      positions.push(target.x, target.y, target.z);
-      colors.push(1, 1, 1);
-    }
+	      sampler.sample(target, normal);
+	      target.addScaledVector(normal, SURFACE_POINT_OFFSET);
+	      positions.push(target.x, target.y, target.z);
+	      colors.push(1, 1, 1);
+      bodyRegionIds.push(bodyRegionIdForSpatialPoint(target.x, target.y, target.z, sceneBox));
+	    }
 
     source.bakedGeometry.dispose();
   }
@@ -661,6 +674,7 @@ function sampleSurfaceGeometry(scene: Object3D, pointCount: number): { pointGeom
   const pointGeometry = new BufferGeometry();
   pointGeometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
   pointGeometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
+  pointGeometry.setAttribute("bodyRegionId", new Float32BufferAttribute(bodyRegionIds, 1));
   pointGeometry.computeBoundingSphere();
 
   const glowPointGeometry = pointGeometry.clone();
@@ -1040,16 +1054,172 @@ function isSkinnedMesh(mesh: Mesh): mesh is SkinnedMesh {
 
 function ignorePointRaycast(): void {}
 
-function surfaceGlowOpacityForFrame(stable: boolean, stableProgress: number, hoveredPoint: Vector3Tuple | null, stablePoint: Vector3Tuple | null): number {
-  const surfaceFade = stable ? 1 - smoothstep(0.08, 0.82, stableProgress) : 1;
-  const hasSurfaceInteraction = Boolean(hoveredPoint || stablePoint);
-  return (hasSurfaceInteraction ? 0.34 : 0.05) * surfaceFade;
+function applyBodyRegionAttribute(mesh: Mesh): void {
+  const geometry = mesh.geometry;
+  if (!geometry || geometry.getAttribute("bodyRegionId")) return;
+
+  const position = geometry.getAttribute("position");
+  if (!position) return;
+
+  const skinIndex = geometry.getAttribute("skinIndex");
+  const skinWeight = geometry.getAttribute("skinWeight");
+  const bones = isSkinnedMesh(mesh) ? mesh.skeleton.bones : [];
+  const regionIds = new Float32Array(position.count);
+  if (!geometry.boundingBox) geometry.computeBoundingBox();
+  const bounds = geometry.boundingBox;
+  const minY = bounds?.min.y ?? 0;
+  const maxY = bounds?.max.y ?? 1;
+  const minZ = bounds?.min.z ?? -1;
+  const maxZ = bounds?.max.z ?? 1;
+
+  for (let index = 0; index < position.count; index += 1) {
+    const x = position.getX(index);
+    const y = position.getY(index);
+    const z = position.getZ(index);
+    const spatialOverride = bodyMeshRegionSpatialOverride(x, y, z, minY, maxY, minZ, maxZ);
+    if (spatialOverride !== null) {
+      regionIds[index] = spatialOverride;
+      continue;
+    }
+
+    if (skinIndex && skinWeight && bones.length > 0) {
+      let bestWeight = -1;
+      let bestJoint = 0;
+      for (let item = 0; item < 4; item += 1) {
+        const weight = skinWeight.getComponent(index, item);
+        if (weight > bestWeight) {
+          bestWeight = weight;
+          bestJoint = skinIndex.getComponent(index, item);
+        }
+      }
+      const regionId = bodyRegionIdForBoneName(bones[bestJoint]?.name ?? "");
+      regionIds[index] = regionId >= 0 ? regionId : bodyRegionIdForVertex("", x, y, z, minY, maxY, minZ, maxZ);
+      continue;
+    }
+
+    regionIds[index] = bodyRegionIdForVertex(
+      "",
+      x,
+      y,
+      z,
+      minY,
+      maxY,
+      minZ,
+      maxZ,
+    );
+  }
+
+  geometry.setAttribute("bodyRegionId", new Float32BufferAttribute(regionIds, 1));
 }
 
-function surfacePointOpacityForFrame(stable: boolean, stableProgress: number, hoveredPoint: Vector3Tuple | null, stablePoint: Vector3Tuple | null): number {
-  const surfaceFade = stable ? 1 - smoothstep(0.08, 0.82, stableProgress) : 1;
+function bodyMeshRegionSpatialOverride(x: number, y: number, z: number, minY: number, maxY: number, minZ: number, maxZ: number): number | null {
+  const height = Math.max(0.001, maxY - minY);
+  const depth = Math.max(0.001, maxZ - minZ);
+  const normalizedY = (y - minY) / height;
+  const backThreshold = minZ + depth * 0.47;
+  const absX = Math.abs(x);
+
+  if (z < backThreshold && normalizedY > 0.48) return regionToId("oxygenTank");
+  if (absX > 3.05 && y > 5.15 && y < 7.15) return x < 0 ? regionToId("rightHand") : regionToId("leftHand");
+  if (absX > 1.95 && absX <= 3.35 && y > 6.35 && y < 9.25) return x < 0 ? regionToId("rightArm") : regionToId("leftArm");
+  if (absX > 0.95 && absX <= 2.3 && y > 8.15 && y < 9.45 && z > -0.85) return x < 0 ? regionToId("rightShoulder") : regionToId("leftShoulder");
+  return null;
+}
+
+function pointCloudRegionSpatialOverride(x: number, y: number, z: number, minY: number, maxY: number, minZ: number, maxZ: number): number | null {
+  const height = Math.max(0.001, maxY - minY);
+  const depth = Math.max(0.001, maxZ - minZ);
+  const normalizedY = (y - minY) / height;
+  const backThreshold = minZ + depth * 0.47;
+  const absX = Math.abs(x);
+
+  if (z < backThreshold && normalizedY > 0.48) return regionToId("oxygenTank");
+  if (absX > 2.95 && y > 5.05 && y < 7.3) return x < 0 ? regionToId("rightHand") : regionToId("leftHand");
+  if (absX > 1.95 && absX <= 3.35 && y > 6.35 && y < 9.25) return x < 0 ? regionToId("rightArm") : regionToId("leftArm");
+  if (absX > 1.0 && absX <= 2.35 && y > 8.1 && y < 9.5 && z > -0.75) return x < 0 ? regionToId("rightShoulder") : regionToId("leftShoulder");
+  return null;
+}
+
+function bodyRegionIdForBoneName(boneName: string): number {
+  const lower = boneName.toLowerCase();
+  if (lower.includes("head") || lower.includes("neck")) return regionToId("head");
+  if (lower.includes("clav.r")) return regionToId("rightShoulder");
+  if (lower.includes("clav.l")) return regionToId("leftShoulder");
+  if (lower.includes(".r") || lower.includes("_r")) {
+    if (lower.includes("finger") || lower.includes("thumb") || lower.includes("hand")) return regionToId("rightHand");
+    if (lower.includes("arm")) return regionToId("rightArm");
+    if (lower.includes("foot") || lower.includes("toes")) return regionToId("rightFoot");
+    if (lower.includes("leg") || lower.includes("hip")) return regionToId("rightLeg");
+  }
+  if (lower.includes(".l") || lower.includes("_l")) {
+    if (lower.includes("finger") || lower.includes("thumb") || lower.includes("hand")) return regionToId("leftHand");
+    if (lower.includes("arm")) return regionToId("leftArm");
+    if (lower.includes("foot") || lower.includes("toes")) return regionToId("leftFoot");
+    if (lower.includes("leg") || lower.includes("hip")) return regionToId("leftLeg");
+  }
+  if (lower.includes("spine3") || lower.includes("spine4")) return regionToId("chest");
+  if (lower.includes("spine") || lower.includes("master") || lower.includes("root")) return regionToId("torso");
+  return -1;
+}
+
+function bodyRegionIdForVertex(boneName: string, x: number, y: number, z: number, minY: number, maxY: number, minZ: number, maxZ: number): number {
+  const lower = boneName.toLowerCase();
+  const height = Math.max(0.001, maxY - minY);
+  const depth = Math.max(0.001, maxZ - minZ);
+  const normalizedY = (y - minY) / height;
+  const backThreshold = minZ + depth * 0.47;
+
+  if (normalizedY < 0.1) return x < 0 ? regionToId("rightFoot") : regionToId("leftFoot");
+  if ((lower.includes("foot") || lower.includes("toes")) && (lower.includes(".r") || lower.includes("_r"))) return regionToId("rightFoot");
+  if ((lower.includes("foot") || lower.includes("toes")) && (lower.includes(".l") || lower.includes("_l"))) return regionToId("leftFoot");
+  if (z < backThreshold && normalizedY > 0.48) return regionToId("oxygenTank");
+  if (lower.includes("head") || lower.includes("neck")) return regionToId("head");
+  if (lower.includes("clav.r")) return regionToId("rightShoulder");
+  if (lower.includes("clav.l")) return regionToId("leftShoulder");
+  if (lower.includes(".r") || lower.includes("_r")) {
+    if (lower.includes("finger") || lower.includes("thumb") || lower.includes("hand")) return regionToId("rightHand");
+    if (lower.includes("arm")) return regionToId("rightArm");
+    if (lower.includes("leg") || lower.includes("hip")) return regionToId("rightLeg");
+  }
+  if (lower.includes(".l") || lower.includes("_l")) {
+    if (lower.includes("finger") || lower.includes("thumb") || lower.includes("hand")) return regionToId("leftHand");
+    if (lower.includes("arm")) return regionToId("leftArm");
+    if (lower.includes("leg") || lower.includes("hip")) return regionToId("leftLeg");
+  }
+  if (lower.includes("spine3") || lower.includes("spine4")) return regionToId("chest");
+  if (lower.includes("spine") || lower.includes("master") || lower.includes("root")) return regionToId("torso");
+
+  if (normalizedY > 0.78) return regionToId("head");
+  if (normalizedY > 0.6) return x < 0 ? regionToId("rightShoulder") : regionToId("leftShoulder");
+  if (normalizedY > 0.42) return regionToId("torso");
+  return x < 0 ? regionToId("rightLeg") : regionToId("leftLeg");
+}
+
+function bodyRegionIdForSpatialPoint(x: number, y: number, z: number, box: Box3): number {
+  const override = pointCloudRegionSpatialOverride(x, y, z, box.min.y, box.max.y, box.min.z, box.max.z);
+  if (override !== null) return override;
+  return bodyRegionIdForVertex("", x, y, z, box.min.y, box.max.y, box.min.z, box.max.z);
+}
+
+function buildZeroBitRegionMask(regions: BodyRegion[]): Float32Array {
+  if (regions.length === 0) return emptyZeroBitRegionMask;
+
+  const mask = new Float32Array(BODY_REGION_COUNT);
+  for (const region of regions) {
+    const id = regionToId(region);
+    if (id >= 0 && id < BODY_REGION_COUNT) mask[id] = 1;
+  }
+  return mask;
+}
+
+function surfaceGlowOpacityForFrame(hoveredPoint: Vector3Tuple | null, stablePoint: Vector3Tuple | null): number {
   const hasSurfaceInteraction = Boolean(hoveredPoint || stablePoint);
-  return (hasSurfaceInteraction ? 0.34 : 0.68) * surfaceFade;
+  return hasSurfaceInteraction ? 0.34 : 0.05;
+}
+
+function surfacePointOpacityForFrame(hoveredPoint: Vector3Tuple | null, stablePoint: Vector3Tuple | null): number {
+  const hasSurfaceInteraction = Boolean(hoveredPoint || stablePoint);
+  return hasSurfaceInteraction ? 0.34 : 0.68;
 }
 
 function prepareMaskedPointMaterial({
@@ -1072,37 +1242,65 @@ function prepareMaskedPointMaterial({
     depthWrite: false,
   }) as MaskedPointMaterial;
 
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.uHasHiddenPoint = { value: 0 };
-    shader.uniforms.uHiddenPoint = { value: new Vector3() };
-    shader.uniforms.uHiddenRadius = { value: HOVER_COLOR_RADIUS * 0.92 };
-    material.userData.hoverMaskUniforms = shader.uniforms;
+	  material.onBeforeCompile = (shader) => {
+	    shader.uniforms.uHasHiddenPoint = { value: 0 };
+	    shader.uniforms.uHiddenPoint = { value: new Vector3() };
+	    shader.uniforms.uHiddenRadius = { value: HOVER_COLOR_RADIUS * 0.92 };
+	    shader.uniforms.uSurfaceFade = { value: 1 };
+    shader.uniforms.uExcludedRegionMask = { value: new Float32Array(BODY_REGION_COUNT) };
+	    material.userData.hoverMaskUniforms = shader.uniforms;
 
     shader.vertexShader = shader.vertexShader
       .replace(
         "void main() {",
         `
-uniform float uHasHiddenPoint;
-uniform vec3 uHiddenPoint;
-uniform float uHiddenRadius;
-varying float vPointCloudVisibility;
+	uniform float uHasHiddenPoint;
+	uniform vec3 uHiddenPoint;
+	uniform float uHiddenRadius;
+uniform float uExcludedRegionMask[${BODY_REGION_COUNT}];
+attribute float bodyRegionId;
+	varying float vPointCloudVisibility;
+varying float vPointBodyRegionId;
 
-void main() {`,
+float pointRegionExcluded(float regionId) {
+  float mask = 0.0;
+  for (int i = 0; i < ${BODY_REGION_COUNT}; i++) {
+    float selected = 1.0 - step(0.5, abs(regionId - float(i)));
+    mask = max(mask, selected * uExcludedRegionMask[i]);
+  }
+  return mask;
+}
+
+	void main() {`,
       )
       .replace(
-        "#include <begin_vertex>",
-        `#include <begin_vertex>
-  float hiddenInfluence = uHasHiddenPoint * (1.0 - smoothstep(uHiddenRadius * 0.55, uHiddenRadius, distance(transformed, uHiddenPoint)));
-  vPointCloudVisibility = 1.0 - hiddenInfluence;`,
-      );
+	        "#include <begin_vertex>",
+		        `#include <begin_vertex>
+		  float hiddenInfluence = uHasHiddenPoint * (1.0 - smoothstep(uHiddenRadius * 0.55, uHiddenRadius, distance(transformed, uHiddenPoint)));
+      float excludedRegion = pointRegionExcluded(bodyRegionId);
+		  vPointCloudVisibility = mix(1.0 - hiddenInfluence, 1.0, excludedRegion);
+      vPointBodyRegionId = bodyRegionId;`,
+	      );
 
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "void main() {",
         `
-varying float vPointCloudVisibility;
+	uniform float uSurfaceFade;
+uniform float uExcludedRegionMask[${BODY_REGION_COUNT}];
+	varying float vPointCloudVisibility;
+varying float vPointBodyRegionId;
 
-void main() {`,
+float pointFragmentRegionExcluded(float regionId) {
+  float mask = 0.0;
+  for (int i = 0; i < ${BODY_REGION_COUNT}; i++) {
+    float selected = 1.0 - step(0.5, abs(regionId - float(i)));
+    mask = max(mask, selected * uExcludedRegionMask[i]);
+  }
+  return mask;
+}
+	
+	void main() {`,
       )
       .replace(
         "#include <clipping_planes_fragment>",
@@ -1110,9 +1308,11 @@ void main() {`,
 if (vPointCloudVisibility <= 0.02) discard;`,
       )
       .replace(
-        "#include <opaque_fragment>",
-        `diffuseColor.a *= smoothstep(0.0, 1.0, vPointCloudVisibility);
-#include <opaque_fragment>`,
+	        "#include <opaque_fragment>",
+		        `float excludedRegion = pointFragmentRegionExcluded(vPointBodyRegionId);
+float maskedSurfaceFade = mix(uSurfaceFade, 1.0, excludedRegion);
+diffuseColor.a *= smoothstep(0.0, 1.0, vPointCloudVisibility) * maskedSurfaceFade;
+		#include <opaque_fragment>`,
       );
   };
 
@@ -1120,11 +1320,22 @@ if (vPointCloudVisibility <= 0.02) discard;`,
   return material;
 }
 
-function updateMaskedPointMaterial(material: MaskedPointMaterial, interactionPoint: Vector3Tuple | null, scene: Object3D, opacity: number): void {
+function updateMaskedPointMaterial(
+  material: MaskedPointMaterial,
+  interactionPoint: Vector3Tuple | null,
+  scene: Object3D,
+  opacity: number,
+  stable: boolean,
+  stableProgress: number,
+  excludedRegionMask: Float32Array,
+): void {
   material.opacity = opacity;
 
   const uniforms = material.userData.hoverMaskUniforms;
   if (!uniforms) return;
+
+  uniforms.uSurfaceFade.value = stable ? 1 - smoothstep(0.08, 0.82, stableProgress) : 1;
+  uniforms.uExcludedRegionMask.value = excludedRegionMask;
 
   uniforms.uHasHiddenPoint.value = interactionPoint ? 1 : 0;
   if (interactionPoint) {
@@ -1137,6 +1348,7 @@ function updateMaskedPointMaterial(material: MaskedPointMaterial, interactionPoi
 function prepareMaterial(source: Material, opacity: number): WaveMaterial {
   const material = source.clone() as WaveMaterial;
   material.transparent = true;
+  material.alphaHash = false;
   material.opacity = opacity;
   material.depthWrite = true;
   material.onBeforeCompile = (shader) => {
@@ -1147,10 +1359,11 @@ function prepareMaterial(source: Material, opacity: number): WaveMaterial {
     shader.uniforms.uHoverRadius = { value: 0.92 };
     shader.uniforms.uHasStablePoint = { value: 0 };
     shader.uniforms.uStablePoint = { value: new Vector3() };
-    shader.uniforms.uStableProgress = { value: 0 };
-    shader.uniforms.uWaveStrength = { value: 1 };
-    shader.uniforms.uBaseOpacity = { value: opacity };
-    material.userData.entangledUniforms = shader.uniforms;
+	    shader.uniforms.uStableProgress = { value: 0 };
+	    shader.uniforms.uWaveStrength = { value: 1 };
+	    shader.uniforms.uBaseOpacity = { value: opacity };
+    shader.uniforms.uExcludedRegionMask = { value: new Float32Array(BODY_REGION_COUNT) };
+	    material.userData.entangledUniforms = shader.uniforms;
 
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -1162,16 +1375,28 @@ uniform float uHasHoverPoint;
 uniform vec3 uHoverPoint;
 uniform float uHoverRadius;
 uniform float uHasStablePoint;
-uniform vec3 uStablePoint;
-uniform float uStableProgress;
-uniform float uWaveStrength;
-varying float vEntangledHover;
-varying float vStableReveal;
+	uniform vec3 uStablePoint;
+	uniform float uStableProgress;
+	uniform float uWaveStrength;
+uniform float uExcludedRegionMask[${BODY_REGION_COUNT}];
+attribute float bodyRegionId;
+	varying float vEntangledHover;
+	varying float vStableReveal;
+varying float vBodyRegionId;
 
-float entangledMask(vec3 p) {
-  if (uHasHoverPoint < 0.5) return 0.0;
-  float distanceToCursor = distance(p, uHoverPoint);
-  return 1.0 - smoothstep(uHoverRadius * 0.45, uHoverRadius, distanceToCursor);
+	float entangledMask(vec3 p) {
+	  if (uHasHoverPoint < 0.5) return 0.0;
+	  float distanceToCursor = distance(p, uHoverPoint);
+	  return 1.0 - smoothstep(uHoverRadius * 0.45, uHoverRadius, distanceToCursor);
+	}
+
+float excludedRegionMask(float regionId) {
+  float mask = 0.0;
+  for (int i = 0; i < ${BODY_REGION_COUNT}; i++) {
+    float selected = 1.0 - step(0.5, abs(regionId - float(i)));
+    mask = max(mask, selected * uExcludedRegionMask[i]);
+  }
+  return mask;
 }
 
 void main() {`,
@@ -1179,10 +1404,12 @@ void main() {`,
       .replace(
         "#include <skinning_vertex>",
         `#include <skinning_vertex>
-  vEntangledHover = entangledMask(transformed);
-  float stableRadius = mix(0.0, 18.0, smoothstep(0.0, 1.0, uStableProgress));
-  float stableDistance = distance(transformed, uStablePoint);
-  vStableReveal = uHasStablePoint * (1.0 - smoothstep(stableRadius * 0.52, stableRadius, stableDistance));
+	  vEntangledHover = entangledMask(transformed);
+		  float stableRadius = mix(0.0, 18.0, smoothstep(0.0, 1.0, uStableProgress));
+		  float stableDistance = distance(transformed, uStablePoint);
+    vBodyRegionId = bodyRegionId;
+    float bodyRegionExclusion = excludedRegionMask(bodyRegionId);
+	  vStableReveal = uHasStablePoint * (1.0 - smoothstep(stableRadius * 0.52, stableRadius, stableDistance)) * (1.0 - bodyRegionExclusion);
   float ring = sin((distance(transformed, uHoverPoint) * 18.0) - (uTime * 7.0));
   float fullBodyWave = sin(uTime * 3.2 + transformed.y * 2.4 + transformed.x * 1.5 + transformed.z * 1.2);
   float hoverStability = 1.0 - vEntangledHover;
@@ -1193,20 +1420,21 @@ void main() {`,
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "void main() {",
-        `
-uniform float uBaseOpacity;
-varying float vEntangledHover;
-varying float vStableReveal;
+	        `
+	uniform float uBaseOpacity;
+	varying float vEntangledHover;
+	varying float vStableReveal;
+varying float vBodyRegionId;
 
 void main() {`,
-      )
-      .replace(
-        "#include <opaque_fragment>",
-        `float hoverOpacity = mix(uBaseOpacity, 0.86, vEntangledHover);
-float revealOpacity = mix(hoverOpacity, 1.0, vStableReveal);
-diffuseColor.a = clamp(revealOpacity, 0.08, 1.0);
-#include <opaque_fragment>`,
-      );
+	      )
+	      .replace(
+		        "#include <opaque_fragment>",
+	        `float hoverOpacity = mix(uBaseOpacity, 0.86, vEntangledHover);
+	float revealOpacity = mix(hoverOpacity, 1.0, vStableReveal);
+	diffuseColor.a = clamp(revealOpacity, 0.08, 1.0);
+	#include <opaque_fragment>`,
+	      );
   };
   material.needsUpdate = true;
   return material;
@@ -1222,6 +1450,8 @@ const reusableFixedPathEnd = new Vector3();
 const reusableSamplePoint = new Vector3();
 const reusableSurfaceHover = new Vector3();
 const reusableSurfaceInteraction = new Vector3();
+const reusableSurfaceZeroBitMask = new Vector3();
+const reusableZeroBitMaskPoint = new Vector3();
 const reusableNerveTarget = new Vector3();
 const reusablePointOnNervePath = new Vector3();
 const reusableCandidateOnNervePath = new Vector3();
