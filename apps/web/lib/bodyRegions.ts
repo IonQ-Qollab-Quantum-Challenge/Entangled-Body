@@ -1,23 +1,10 @@
 import type { Vector3Tuple } from "three";
 
-export const BODY_REGIONS = [
-  "head",
-  "chest",
-  "torso",
-  "oxygenTank",
-  "rightShoulder",
-  "leftShoulder",
-  "rightArm",
-  "leftArm",
-  "rightHand",
-  "leftHand",
-  "rightLeg",
-  "leftLeg",
-  "rightFoot",
-  "leftFoot",
-] as const;
+import bodyRegionMap from "../../api/data/body_region_map.json";
 
-export type BodyRegion = (typeof BODY_REGIONS)[number];
+export type BodyRegion = (typeof bodyRegionMap.regions)[number]["id"];
+
+export const BODY_REGIONS = bodyRegionMap.regions.map((region) => region.id) as BodyRegion[];
 
 export type RegionState = {
   activation: number;
