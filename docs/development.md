@@ -98,6 +98,7 @@ IONQ_SIMULATOR_BACKEND=ionq_simulator
 IONQ_QPU_BACKEND=ionq_qpu
 IONQ_ENABLE_HARDWARE=false
 IONQ_TIMEOUT_SECONDS=120
+API_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://entangledbody.com
 ```
 
 IonQ hardware execution only submits to a QPU when `IONQ_API_KEY` is set and `IONQ_ENABLE_HARDWARE=true`. Otherwise, IonQ requests return an Aer fallback payload with `fallbackReason`.
@@ -107,7 +108,10 @@ Frontend environment variables:
 ```text
 NEXT_PUBLIC_API_BASE_URL=/api
 NEXT_PUBLIC_QUANTUM_REQUEST_TIMEOUT_MS=300000
+NEXT_PUBLIC_QUANTUM_FALLBACK_ON_HTTP_ERRORS=false
 ```
+
+Set `NEXT_PUBLIC_QUANTUM_FALLBACK_ON_HTTP_ERRORS=true` only when a demo should use bundled local samples even after backend HTTP errors. Keep it false while debugging so API 4xx/5xx responses surface in the UI.
 
 For local development without the Next.js rewrite, point the browser directly at the API:
 
@@ -163,7 +167,7 @@ Run backend smoke tests:
 
 ```bash
 cd apps/api
-python -m pytest tests/smoke_quantum_backends.py -q
+../../.venv/bin/python -m unittest tests.smoke_quantum_backends -q
 ```
 
 The smoke tests cover:
@@ -181,7 +185,7 @@ cd apps/api
 IONQ_API_KEY=your-ionq-api-key \
 IONQ_ENABLE_HARDWARE=true \
 RUN_IONQ_HARDWARE_TEST=true \
-python -m pytest tests/smoke_quantum_backends.py::IonQHardwareIntegrationTests::test_real_ionq_hardware_execution_when_explicitly_enabled -q
+../../.venv/bin/python -m unittest tests.smoke_quantum_backends.IonQHardwareIntegrationTests.test_real_ionq_hardware_execution_when_explicitly_enabled -q
 ```
 
 Frontend automated tests are not currently documented.

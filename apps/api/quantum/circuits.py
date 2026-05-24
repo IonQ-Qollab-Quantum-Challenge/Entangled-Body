@@ -102,10 +102,14 @@ def _target_probability(
     interaction: str,
 ) -> float:
     if target_region == observed_region:
-        return 1.0
+        return 0.96 if interaction in {"click", "hold"} else 1.0
 
     max_distance = _max_spatial_distance(observed_region)
     distance_ratio = 0.0 if max_distance <= 0 else max(0.0, min(1.0, distance / max_distance))
+    if interaction in {"click", "hold"}:
+        one_probability = 0.965 - 0.125 * distance_ratio
+        return max(0.84, min(0.965, one_probability))
+
     one_probability = 0.995 - 0.095 * distance_ratio
     return max(0.90, min(0.995, one_probability))
 

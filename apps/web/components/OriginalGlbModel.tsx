@@ -1133,11 +1133,24 @@ function pointCloudRegionSpatialOverride(x: number, y: number, z: number, minY: 
   const backThreshold = minZ + depth * 0.47;
   const absX = Math.abs(x);
 
+  if (isPointCloudHandPoint(absX, y, normalizedY)) return x < 0 ? regionToId("rightHand") : regionToId("leftHand");
   if (z < backThreshold && normalizedY > 0.48) return regionToId("oxygenTank");
-  if (absX > 2.95 && y > 5.05 && y < 7.3) return x < 0 ? regionToId("rightHand") : regionToId("leftHand");
   if (absX > 1.95 && absX <= 3.35 && y > 6.35 && y < 9.25) return x < 0 ? regionToId("rightArm") : regionToId("leftArm");
   if (absX > 1.0 && absX <= 2.35 && y > 8.1 && y < 9.5 && z > -0.75) return x < 0 ? regionToId("rightShoulder") : regionToId("leftShoulder");
+  if (isPointCloudChestPoint(absX, y, normalizedY)) return regionToId("chest");
   return null;
+}
+
+function isPointCloudHandPoint(absX: number, y: number, normalizedY: number): boolean {
+  const inLowHandBand = absX > 2.15 && normalizedY > 0.36 && normalizedY < 0.56;
+  const inModelHandBand = absX > 2.55 && y > 4.8 && y < 7.55;
+  return inLowHandBand || inModelHandBand;
+}
+
+function isPointCloudChestPoint(absX: number, y: number, normalizedY: number): boolean {
+  const inCentralUpperBand = absX <= 1.05 && normalizedY > 0.58 && normalizedY < 0.76;
+  const inModelChestBand = absX <= 1.18 && y > 7.05 && y < 9.35;
+  return inCentralUpperBand || inModelChestBand;
 }
 
 function bodyRegionIdForBoneName(boneName: string): number {
@@ -1190,6 +1203,7 @@ function bodyRegionIdForVertex(boneName: string, x: number, y: number, z: number
   if (lower.includes("spine") || lower.includes("master") || lower.includes("root")) return regionToId("torso");
 
   if (normalizedY > 0.78) return regionToId("head");
+  if (Math.abs(x) <= 1.05 && normalizedY > 0.58) return regionToId("chest");
   if (normalizedY > 0.6) return x < 0 ? regionToId("rightShoulder") : regionToId("leftShoulder");
   if (normalizedY > 0.42) return regionToId("torso");
   return x < 0 ? regionToId("rightLeg") : regionToId("leftLeg");
@@ -1238,7 +1252,7 @@ function prepareMaskedPointMaterial({
     transparent: true,
     opacity,
     blending,
-    depthTest: true,
+    depthTest: false,
     depthWrite: false,
   }) as MaskedPointMaterial;
 
@@ -1329,7 +1343,9 @@ function updateMaskedPointMaterial(
   stableProgress: number,
   excludedRegionMask: Float32Array,
 ): void {
-  material.opacity = opacity;
+  const hasExcludedRegions = hasActiveRegionMask(excludedRegionMask);
+  material.opacity = hasExcludedRegions ? Math.max(opacity, 0.62) : opacity;
+  material.depthTest = false;
 
   const uniforms = material.userData.hoverMaskUniforms;
   if (!uniforms) return;
@@ -1343,6 +1359,13 @@ function updateMaskedPointMaterial(
     scene.worldToLocal(reusableSurfaceInteraction);
     uniforms.uHiddenPoint.value = reusableSurfaceInteraction;
   }
+}
+
+function hasActiveRegionMask(mask: Float32Array): boolean {
+  for (let index = 0; index < mask.length; index += 1) {
+    if (mask[index] > 0.5) return true;
+  }
+  return false;
 }
 
 function prepareMaterial(source: Material, opacity: number): WaveMaterial {
