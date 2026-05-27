@@ -153,6 +153,42 @@ resource "aws_iam_role_policy_attachment" "apprunner_ecr_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
 }
 
+resource "aws_iam_role" "apprunner_instance" {
+  name = "${local.name}-apprunner-instance"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "tasks.apprunner.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "apprunner_read_ionq_secret" {
+  count = var.ionq_api_key_secret_arn == null ? 0 : 1
+  name  = "${local.name}-read-ionq-secret"
+  role  = aws_iam_role.apprunner_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = var.ionq_api_key_secret_arn
+      }
+    ]
+  })
+}
+
 resource "aws_apprunner_service" "api" {
   service_name = "${local.name}-api"
 
@@ -174,6 +210,9 @@ resource "aws_apprunner_service" "api" {
       image_configuration {
         port                          = "8000"
         runtime_environment_variables = var.api_environment_variables
+        runtime_environment_secrets = var.ionq_api_key_secret_arn == null ? {} : {
+          IONQ_API_KEY = var.ionq_api_key_secret_arn
+        }
       }
     }
   }
@@ -188,8 +227,9 @@ resource "aws_apprunner_service" "api" {
   }
 
   instance_configuration {
-    cpu    = "1024"
-    memory = "2048"
+    cpu               = "1024"
+    memory            = "2048"
+    instance_role_arn = aws_iam_role.apprunner_instance.arn
   }
 }
 

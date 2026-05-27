@@ -68,3 +68,10 @@ variable "create_route53_zone" {
   type        = bool
   default     = false
 }
+
+variable "ionq_api_key_secret_arn" {
+  description = "Secrets Manager ARN for the IonQ API key used by the App Runner API service."
+  type        = string
+  default     = null
+  sensitive   = true
+}
