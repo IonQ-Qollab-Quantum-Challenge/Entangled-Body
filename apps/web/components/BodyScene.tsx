@@ -318,7 +318,7 @@ export function BodyScene() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== "m" || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.code !== "KeyM" || event.metaKey || event.ctrlKey || event.altKey) return;
 
       const target = event.target;
       if (
