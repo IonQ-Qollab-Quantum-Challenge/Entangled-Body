@@ -26,7 +26,7 @@ def ionq_is_configured() -> bool:
 
 
 def ionq_hardware_enabled() -> bool:
-    return _truthy(os.getenv(IONQ_ENABLE_HARDWARE_ENV, "false"))
+    return _truthy(os.getenv(IONQ_ENABLE_HARDWARE_ENV, "true"))
 
 
 def ionq_status() -> dict[str, Any]:

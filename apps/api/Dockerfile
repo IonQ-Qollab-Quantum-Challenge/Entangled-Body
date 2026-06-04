@@ -5,6 +5,8 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_DEFAULT_TIMEOUT=60
 
+ENV IONQ_ENABLE_HARDWARE=true
+
 WORKDIR /app/apps/api
 
 COPY apps/api/requirements.txt ./requirements.txt

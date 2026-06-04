@@ -52,6 +52,7 @@ export function BodyScene() {
   const [connectionBreakProgress, setConnectionBreakProgress] = useState(0);
   const [inspectedNode, setInspectedNode] = useState<InspectedNode | null>(null);
   const [uiScale, setUiScale] = useState(1);
+  const [dashboardOpen, setDashboardOpen] = useState(true);
   const lastHoverRegion = useRef<BodyRegion | null>(null);
   const collapseFrame = useRef<number | null>(null);
   const connectionBreakFrame = useRef<number | null>(null);
@@ -388,7 +389,22 @@ export function BodyScene() {
       <LoadingIntro modelReady={modelReady} onComplete={handleIntroComplete} onExitStart={handleIntroExitStart} visible={!introComplete} />
       <BackgroundMusic playing={musicPlaying} muted={musicMuted} onPlayingChange={setMusicPlaying} />
       {error ? <div className="scene-status" role="status" aria-live="polite">{error}</div> : null}
-      <div className="scene-dashboard-shell" style={{ transform: `scale(${uiScale})` }}>
+      <button
+        type="button"
+        className={dashboardOpen ? "dashboard-toggle dashboard-toggle--open" : "dashboard-toggle"}
+        onClick={() => setDashboardOpen((open) => !open)}
+        aria-expanded={dashboardOpen}
+        aria-controls="quantum-dashboard-panel"
+        aria-label={dashboardOpen ? "Hide quantum dashboard" : "Show quantum dashboard"}
+      >
+        <span className="dashboard-toggle__chevron" aria-hidden="true" />
+        <span className="dashboard-toggle__text">Data</span>
+      </button>
+      <div
+        id="quantum-dashboard-panel"
+        className={dashboardOpen ? "scene-dashboard-shell scene-dashboard-shell--open" : "scene-dashboard-shell scene-dashboard-shell--closed"}
+        style={{ transform: `scale(${uiScale})` }}
+      >
         <QuantumNodeDashboard
           latestMeasurement={latestMeasurement}
           appMode={appMode}
