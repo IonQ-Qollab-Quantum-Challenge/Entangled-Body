@@ -95,7 +95,7 @@ Use real values only in local, uncommitted env files:
 IONQ_API_KEY=
 IONQ_BACKEND=ionq_simulator
 IONQ_SIMULATOR_BACKEND=ionq_simulator
-IONQ_QPU_BACKEND=ionq_qpu
+IONQ_QPU_BACKEND=qpu.forte-enterprise-1
 IONQ_ENABLE_HARDWARE=false
 IONQ_TIMEOUT_SECONDS=120
 API_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://entangledbody.com

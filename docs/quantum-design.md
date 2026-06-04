@@ -42,7 +42,7 @@ Each blue point rendered on the body should be represented by a stable node obje
   "activation": 0.503906,
   "coherence": 0.994,
   "measuredBit": 1,
-  "backend": "ionq_qpu"
+  "backend": "qpu.forte-enterprise-1"
 }
 ```
 
@@ -170,7 +170,7 @@ IonQ's official Qiskit workflow uses:
 - Python package: `qiskit-ionq`
 - Provider class: `qiskit_ionq.IonQProvider`
 - Simulator backend: `ionq_simulator`
-- QPU backend: `ionq_qpu` or a specific QPU backend name such as an Aria/Forte target when available to the account
+- QPU backend: a specific QPU backend name such as `qpu.forte-enterprise-1`, `qpu.forte-1`, or `qpu.aria-1` (the generic `ionq_qpu` alias is no longer accepted by the IonQ API); choose a target available to the account
 - Credential source: an IonQ API key, preferably from an environment variable
 
 Reference:
@@ -190,9 +190,9 @@ Runtime environment:
 
 ```bash
 IONQ_API_KEY=...
-IONQ_BACKEND=ionq_qpu
+IONQ_BACKEND=qpu.forte-enterprise-1
 IONQ_SIMULATOR_BACKEND=ionq_simulator
-IONQ_QPU_BACKEND=ionq_qpu
+IONQ_QPU_BACKEND=qpu.forte-enterprise-1
 IONQ_SHOTS=1024
 IONQ_ENABLE_HARDWARE=false
 IONQ_TIMEOUT_SECONDS=120
@@ -232,7 +232,7 @@ The response must report the backend that actually ran the circuit, not only the
 ```json
 {
   "requestedBackend": "ionq_hardware",
-  "backend": "ionq_qpu",
+  "backend": "qpu.forte-enterprise-1",
   "hardware": true,
   "provider": "ionq",
   "jobId": "job-id-from-provider",
@@ -302,7 +302,7 @@ from quantum.circuits import build_measurement_circuit, circuit_type_for_interac
 
 def run_ionq_measurement(region: str, intensity: float, shots: int, interaction: str) -> dict:
     provider = IonQProvider()
-    backend = provider.get_backend("ionq_qpu")
+    backend = provider.get_backend("qpu.forte-enterprise-1")
     circuit = build_measurement_circuit(region, intensity, interaction)
     job = backend.run(circuit, shots=shots)
     result = job.result()
@@ -349,7 +349,7 @@ Every backend must normalize into this response shape.
 
 ```json
 {
-  "backend": "ionq_qpu",
+  "backend": "qpu.forte-enterprise-1",
   "requestedBackend": "ionq_hardware",
   "provider": "ionq",
   "hardware": true,
@@ -481,7 +481,7 @@ IonQ hardware execution must be opt-in.
 - Load `IonQProvider` only inside the IonQ adapter so local Aer remains usable without `qiskit-ionq`.
 - Check `IONQ_API_KEY`.
 - Check `IONQ_ENABLE_HARDWARE`.
-- Select `IONQ_BACKEND`, defaulting to `ionq_qpu` for hardware and `ionq_simulator` for cloud simulation.
+- Select `IONQ_BACKEND`, defaulting to `qpu.forte-enterprise-1` for hardware and `ionq_simulator` for cloud simulation.
 - Submit the Qiskit circuit with `backend.run(circuit, shots=shots)`.
 - Normalize `job.result().get_counts()` into the existing mapper pipeline.
 
