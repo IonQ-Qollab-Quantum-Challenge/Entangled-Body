@@ -6,6 +6,10 @@ const REQUEST_TIMEOUT_MS = parsePositiveInteger(
   process.env.NEXT_PUBLIC_QUANTUM_REQUEST_TIMEOUT_MS,
   300000,
 );
+const FALLBACK_ON_HTTP_ERRORS = parseBoolean(
+  process.env.NEXT_PUBLIC_QUANTUM_FALLBACK_ON_HTTP_ERRORS,
+  false,
+);
 
 export type QuantumInteraction = "hover" | "click" | "hold";
 export type QuantumBackend = "aer" | "ionq_simulator" | "ionq_hardware";
@@ -126,6 +130,7 @@ async function requestJsonWithFallback(url: string, init: RequestInit, fallback:
 function shouldUseLocalFallback(error: unknown): boolean {
   if (error instanceof TypeError) return true;
   if (!(error instanceof Error)) return false;
+  if (isHttpServerResponse(error.message)) return FALLBACK_ON_HTTP_ERRORS;
   return (
     error.message.includes("Failed to fetch") ||
     error.message.includes("Load failed") ||
@@ -133,12 +138,20 @@ function shouldUseLocalFallback(error: unknown): boolean {
     error.message.includes("socket hang up") ||
     error.message.includes("ECONNRESET") ||
     error.message.includes("Request failed with 404") ||
-    error.message.includes("Request failed with 500") ||
     error.message.includes("Request failed with 502") ||
     error.message.includes("Request failed with 503") ||
-    error.message.includes("Request failed with 504") ||
-    error.message.includes("Request failed with 403") ||
-    error.message.includes("Request failed with 405")
+    error.message.includes("Request failed with 504")
+  );
+}
+
+function isHttpServerResponse(message: string): boolean {
+  return (
+    message.includes("Request failed with 400") ||
+    message.includes("Request failed with 401") ||
+    message.includes("Request failed with 403") ||
+    message.includes("Request failed with 405") ||
+    message.includes("Request failed with 422") ||
+    message.includes("Request failed with 500")
   );
 }
 
@@ -241,4 +254,9 @@ function parsePositiveInteger(value: string | undefined, fallback: number): numb
   if (!value) return fallback;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (!value) return fallback;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 }

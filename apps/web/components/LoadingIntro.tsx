@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 
 const INTRO_LINES = [
   "Everything is in a quantum state.",
@@ -58,35 +58,39 @@ export function LoadingIntro({ modelReady, onComplete, onExitStart, visible }: L
     return () => window.clearTimeout(timeout);
   }, [currentLine, typedLength, visible]);
 
+  const advanceIntro = useCallback(() => {
+    void resumeTypingAudio(audioContextRef);
+
+    if (typedLength < currentLine.length) {
+      setTypedLength(currentLine.length);
+      return;
+    }
+
+    if (lineIndex >= INTRO_LINES.length - 1) {
+      if (modelReady && !exiting) {
+        onExitStart?.();
+        setExiting(true);
+        window.setTimeout(onComplete, INTRO_FADE_OUT_MS);
+      }
+      return;
+    }
+
+    setLineIndex((index) => index + 1);
+    setTypedLength(0);
+  }, [currentLine.length, exiting, lineIndex, modelReady, onComplete, onExitStart, typedLength]);
+
   useEffect(() => {
     if (!visible) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== "Enter") return;
       event.preventDefault();
-      void resumeTypingAudio(audioContextRef);
-
-      if (typedLength < currentLine.length) {
-        setTypedLength(currentLine.length);
-        return;
-      }
-
-      if (lineIndex >= INTRO_LINES.length - 1) {
-        if (modelReady && !exiting) {
-          onExitStart?.();
-          setExiting(true);
-          window.setTimeout(onComplete, INTRO_FADE_OUT_MS);
-        }
-        return;
-      }
-
-      setLineIndex((index) => index + 1);
-      setTypedLength(0);
+      advanceIntro();
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentLine.length, exiting, lineIndex, modelReady, onComplete, onExitStart, typedLength, visible]);
+  }, [advanceIntro, visible]);
 
   if (!visible) return null;
   const isTitleLine = lineIndex === INTRO_LINES.length - 1;
@@ -95,7 +99,17 @@ export function LoadingIntro({ modelReady, onComplete, onExitStart, visible }: L
   const [title, subtitle = ""] = visibleTitle.split("\n");
 
   return (
-    <section className={exiting ? "loading-intro loading-intro--exiting" : "loading-intro"} aria-live="polite" aria-label="3D model loading introduction">
+    <section
+      className={exiting ? "loading-intro loading-intro--exiting" : "loading-intro"}
+      aria-live="polite"
+      aria-label="3D model loading introduction"
+      role="button"
+      tabIndex={0}
+      onPointerUp={(event) => {
+        if (event.button !== 0) return;
+        advanceIntro();
+      }}
+    >
       <div className="loading-intro__stars" aria-hidden="true">
         {stars.map((star) => (
           <i

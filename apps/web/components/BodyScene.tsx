@@ -51,6 +51,7 @@ export function BodyScene() {
   const [connectionBreakPoint, setConnectionBreakPoint] = useState<Vector3Tuple | null>(null);
   const [connectionBreakProgress, setConnectionBreakProgress] = useState(0);
   const [inspectedNode, setInspectedNode] = useState<InspectedNode | null>(null);
+  const [collapseZeroBitRegions, setCollapseZeroBitRegions] = useState<BodyRegion[]>([]);
   const [uiScale, setUiScale] = useState(1);
   const [dashboardOpen, setDashboardOpen] = useState(true);
   const lastHoverRegion = useRef<BodyRegion | null>(null);
@@ -59,6 +60,7 @@ export function BodyScene() {
   const stableReturnFrame = useRef<number | null>(null);
   const stableReturnTimeout = useRef<number | null>(null);
   const collapseLocked = modelStable || collapseFrame.current !== null || stableReturnTimeout.current !== null || stableReturnFrame.current !== null;
+  const zeroBitRegions = modelStable ? collapseZeroBitRegions : [];
 
   useEffect(() => {
     return () => {
@@ -99,7 +101,45 @@ export function BodyScene() {
     connectionBreakFrame.current = requestAnimationFrame(tick);
   }, [hoveredPoint]);
 
-  const startCollapseAnimation = useCallback((point?: Vector3Tuple, onReturnComplete?: () => void) => {
+  const startReturnAnimation = useCallback((onReturnComplete?: () => void) => {
+    if (collapseFrame.current !== null) {
+      cancelAnimationFrame(collapseFrame.current);
+      collapseFrame.current = null;
+    }
+    if (stableReturnFrame.current !== null) cancelAnimationFrame(stableReturnFrame.current);
+    if (stableReturnTimeout.current !== null) {
+      window.clearTimeout(stableReturnTimeout.current);
+      stableReturnTimeout.current = null;
+    }
+
+    const returnStarted = performance.now();
+    const returnTick = (returnNow: number) => {
+      const returnProgress = Math.min(1, (returnNow - returnStarted) / 2600);
+      const reverseProgress = 1 - returnProgress;
+
+      setStableProgress(reverseProgress);
+      setCollapseProgress(reverseProgress);
+      setConnectionBreakProgress(reverseProgress);
+
+      if (returnProgress < 1) {
+        stableReturnFrame.current = requestAnimationFrame(returnTick);
+      } else {
+        stableReturnFrame.current = null;
+        setMode("superposition");
+        setCollapseProgress(0);
+        setModelStable(false);
+        setStablePoint(null);
+        setStableProgress(0);
+        setConnectionBreakPoint(null);
+        setConnectionBreakProgress(0);
+        onReturnComplete?.();
+      }
+    };
+
+    stableReturnFrame.current = requestAnimationFrame(returnTick);
+  }, []);
+
+  const startCollapseAnimation = useCallback((point?: Vector3Tuple) => {
     if (collapseFrame.current !== null) cancelAnimationFrame(collapseFrame.current);
     if (stableReturnFrame.current !== null) {
       cancelAnimationFrame(stableReturnFrame.current);
@@ -124,34 +164,6 @@ export function BodyScene() {
         collapseFrame.current = requestAnimationFrame(tick);
       } else {
         collapseFrame.current = null;
-        stableReturnTimeout.current = window.setTimeout(() => {
-          stableReturnTimeout.current = null;
-          const returnStarted = performance.now();
-          const returnTick = (returnNow: number) => {
-            const returnProgress = Math.min(1, (returnNow - returnStarted) / 2600);
-            const reverseProgress = 1 - returnProgress;
-
-            setStableProgress(reverseProgress);
-            setCollapseProgress(reverseProgress);
-            setConnectionBreakProgress(reverseProgress);
-
-            if (returnProgress < 1) {
-              stableReturnFrame.current = requestAnimationFrame(returnTick);
-            } else {
-              stableReturnFrame.current = null;
-              setMode("superposition");
-              setCollapseProgress(0);
-              setModelStable(false);
-              setStablePoint(null);
-              setStableProgress(0);
-              setConnectionBreakPoint(null);
-              setConnectionBreakProgress(0);
-              onReturnComplete?.();
-            }
-          };
-
-          stableReturnFrame.current = requestAnimationFrame(returnTick);
-        }, 3400);
       }
     };
 
@@ -251,20 +263,29 @@ export function BodyScene() {
       setInspectedNode(null);
       setHoveredRegion(targetRegion);
       setHoveredPoint(point ?? hoveredPoint);
-      startConnectionBreakAnimation(point);
-      startCollapseAnimation(point, () => {
-        void regenerateEntangledState(targetRegion);
-      });
       const payload = await measure(targetRegion, 1, 1, { interaction: "hold", backend: quantumBackend });
       const mapped = mapQuantumToBody(payload);
+      const collapsedZeroBitRegions = mapped.nodeStates.filter((node) => node.measuredBit === "0").map((node) => node.region);
+      setCollapseZeroBitRegions(collapsedZeroBitRegions);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
+      startConnectionBreakAnimation(point);
+      startCollapseAnimation(point);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Global collapse failed.");
     } finally {
       setLoading(false);
     }
-  }, [collapseLocked, hoveredPoint, hoveredRegion, loading, quantumBackend, regenerateEntangledState, startCollapseAnimation, startConnectionBreakAnimation]);
+  }, [collapseLocked, hoveredPoint, hoveredRegion, loading, quantumBackend, startCollapseAnimation, startConnectionBreakAnimation]);
+
+  const handleReturnToEntangledState = useCallback(() => {
+    if (!modelStable && collapseFrame.current === null) return;
+    const targetRegion = hoveredRegion ?? "torso";
+    startReturnAnimation(() => {
+      setCollapseZeroBitRegions([]);
+      void regenerateEntangledState(targetRegion);
+    });
+  }, [hoveredRegion, modelStable, regenerateEntangledState, startReturnAnimation]);
 
   const applyStrongMeasurement = useCallback((region: BodyRegion, point?: Vector3Tuple, nodeIndex?: number) => {
     if (appMode === "inspect") {
@@ -298,7 +319,7 @@ export function BodyScene() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== "m" || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.code !== "KeyM" || event.metaKey || event.ctrlKey || event.altKey) return;
 
       const target = event.target;
       if (
@@ -322,6 +343,7 @@ export function BodyScene() {
     setAppMode(nextMode);
     setError(null);
     setInspectedNode(null);
+    setCollapseZeroBitRegions([]);
     if (nextMode === "inspect") {
       if (connectionBreakFrame.current !== null) {
         cancelAnimationFrame(connectionBreakFrame.current);
@@ -354,6 +376,7 @@ export function BodyScene() {
             onHoverRegion={applyWeakMeasurement}
             onMeasureRegion={applyStrongMeasurement}
             onGlobalCollapse={handleGlobalCollapse}
+            zeroBitRegions={zeroBitRegions}
             onReady={handleModelReady}
             stable={modelStable}
             stablePoint={stablePoint}
@@ -374,8 +397,18 @@ export function BodyScene() {
           <button type="button" className={appMode === "measurement" ? "scene-mode-switch__button scene-mode-switch__button--active" : "scene-mode-switch__button"} onClick={() => switchAppMode("measurement")}>
             Measurement
           </button>
-        </div>
-        <button
+	        </div>
+        {appMode === "measurement" && modelStable ? (
+          <button
+            type="button"
+            className="scene-return-button"
+            onClick={handleReturnToEntangledState}
+            disabled={stableReturnFrame.current !== null}
+          >
+            Return
+          </button>
+        ) : null}
+	        <button
           type="button"
           className={!musicMuted ? "music-toggle music-toggle--playing" : "music-toggle"}
           onClick={toggleMusicMuted}
