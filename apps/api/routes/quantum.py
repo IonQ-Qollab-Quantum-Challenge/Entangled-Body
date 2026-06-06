@@ -16,7 +16,7 @@ from quantum.mapper import (
     counts_to_region_states,
 )
 from quantum.run_simulator import run_aer_measurement
-from quantum.run_ionq import ionq_status, run_ionq_measurement
+from quantum.run_ionq import fetch_ionq_job, ionq_status, submit_ionq_job
 
 router = APIRouter(prefix="/quantum", tags=["quantum"])
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "precomputed_samples.json"
@@ -38,6 +38,10 @@ class MeasurementRequest(BaseModel):
             allowed = ", ".join(REGIONS)
             raise ValueError(f"Unknown body region '{value}'. Expected one of: {allowed}.")
         return value
+
+
+class JobStatusRequest(MeasurementRequest):
+    jobId: str = Field(min_length=1)
 
 
 @router.get("/health")
@@ -96,32 +100,61 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
             "provider": "aer",
             "hardware": False,
         }
-    else:
-        measurement = run_ionq_measurement(
-            region=payload.region,
-            intensity=payload.intensity,
-            shots=payload.shots,
-            interaction=payload.interaction,
-            requested_backend=payload.backend,
-            seed=payload.seed,
-        )
+        return _finalize_measurement(measurement, payload)
 
-    counts = measurement["counts"]
+    # IonQ backends execute asynchronously: submit the job and return its id
+    # immediately so the request stays well under any gateway timeout. The
+    # client polls POST /quantum/job until the job resolves. A pre-submit
+    # fallback (no key, hardware disabled, etc.) is already completed and is
+    # finalized here.
+    measurement = submit_ionq_job(
+        region=payload.region,
+        intensity=payload.intensity,
+        shots=payload.shots,
+        interaction=payload.interaction,
+        requested_backend=payload.backend,
+        seed=payload.seed,
+    )
+    if measurement.get("status") == "pending":
+        return {**measurement, "region": payload.region}
+    return _finalize_measurement(measurement, payload)
+
+
+@router.post("/job")
+def get_job_result(payload: JobStatusRequest) -> dict[str, Any]:
+    measurement = fetch_ionq_job(
+        job_id=payload.jobId,
+        region=payload.region,
+        intensity=payload.intensity,
+        shots=payload.shots,
+        interaction=payload.interaction,
+        requested_backend=payload.backend,
+        seed=payload.seed,
+    )
+    if measurement.get("status") == "pending":
+        return {**measurement, "region": payload.region}
+    return _finalize_measurement(measurement, payload)
+
+
+def _finalize_measurement(measurement: dict[str, Any], payload: MeasurementRequest) -> dict[str, Any]:
+    counts = measurement.get("counts")
     if not isinstance(counts, dict):
         raise HTTPException(status_code=500, detail="Quantum backend returned invalid counts.")
 
+    shots = int(measurement["shots"])
     region_states = counts_to_region_states(
         counts=counts,
         region=payload.region,
         intensity=payload.intensity,
-        shots=int(measurement["shots"]),
+        shots=shots,
         seed=payload.seed,
     )
-    marginals = calculate_marginals(counts, int(measurement["shots"]))
-    correlations = calculate_correlations(counts, int(measurement["shots"]))
+    marginals = calculate_marginals(counts, shots)
+    correlations = calculate_correlations(counts, shots)
     entanglement_links = build_entanglement_links(region_states, correlations)
     return {
         **measurement,
+        "status": measurement.get("status", "completed"),
         "region": payload.region,
         "analysisVersion": 1,
         "marginals": marginals,
@@ -132,7 +165,7 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
             counts=counts,
             region_states=region_states,
             interaction=payload.interaction,
-            shots=int(measurement["shots"]),
+            shots=shots,
         ),
     }
 

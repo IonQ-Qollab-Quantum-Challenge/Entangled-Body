@@ -418,7 +418,8 @@ export function QuantumNodeDashboard({
       )}
 
       {error ? <div className="quantum-dashboard__error">{error}</div> : null}
-      {backend === "ionq_hardware" ? <div className="quantum-dashboard__warning">Hardware QPU only runs when IONQ_ENABLE_HARDWARE=true.</div> : null}
+      {backend === "ionq_hardware" && health?.ionq_hardware_enabled === false ? <div className="quantum-dashboard__warning">Hardware QPU is disabled (IONQ_ENABLE_HARDWARE is not true); falling back to simulator.</div> : null}
+      {backend === "ionq_hardware" && health?.ionq_hardware_enabled !== false ? <div className="quantum-dashboard__warning">Hardware QPU runs only on a full measurement (collapse). Hover and node inspection use the IonQ simulator.</div> : null}
       {effectiveMeasurement?.fallbackReason ? <div className="quantum-dashboard__warning">Fallback: {effectiveMeasurement.fallbackReason}</div> : null}
     </aside>
   );

@@ -6,7 +6,7 @@ import type { Vector3Tuple } from "three";
 
 import { emptyRegionStates, type BodyQuantumState, type BodyRegion } from "../lib/bodyRegions";
 import { mapQuantumToBody } from "../lib/mapQuantumToBody";
-import { measure, type QuantumBackend, type QuantumMeasurementPayload } from "../lib/quantumClient";
+import { exploratoryBackend, measure, type QuantumBackend, type QuantumMeasurementPayload } from "../lib/quantumClient";
 import { BackgroundMusic } from "./BackgroundMusic";
 import { CameraControls } from "./CameraControls";
 import { LoadingIntro } from "./LoadingIntro";
@@ -194,7 +194,7 @@ export function BodyScene() {
       setError(null);
       const mapped = mapQuantumToBody(await measure(region, 0.45, 1, {
         interaction: "hover",
-        backend: quantumBackend,
+        backend: exploratoryBackend(quantumBackend),
         seed: Date.now() % 1000000,
       }));
       setQuantumState(mapped);
@@ -222,7 +222,7 @@ export function BodyScene() {
         region,
         point: point ?? hoveredPoint ?? [0, 0, 0],
       });
-      const payload = await measure(region, 0.45, 1, { interaction: "hover", backend: quantumBackend });
+      const payload = await measure(region, 0.45, 1, { interaction: "hover", backend: exploratoryBackend(quantumBackend) });
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
@@ -239,7 +239,7 @@ export function BodyScene() {
       setError(null);
       const payload = await measure(region, 0.45, 1, {
         interaction: "hover",
-        backend: quantumBackend,
+        backend: exploratoryBackend(quantumBackend),
         seed: Date.now() % 1000000,
       });
       const mapped = mapQuantumToBody(payload);

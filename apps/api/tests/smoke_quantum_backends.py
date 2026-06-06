@@ -8,8 +8,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import time  # noqa: E402
+
 from config.env import load_env_files  # noqa: E402
-from routes.quantum import MeasurementRequest, measure_region, quantum_health  # noqa: E402
+from routes.quantum import (  # noqa: E402
+    JobStatusRequest,
+    MeasurementRequest,
+    get_job_result,
+    measure_region,
+    quantum_health,
+)
 
 
 REQUIRED_RESPONSE_KEYS = {
@@ -54,14 +62,15 @@ class QuantumBackendSmokeTests(unittest.TestCase):
         self.assertFalse(response["hardware"])
         self.assertEqual(response["qubits"], 14)
 
-    def test_default_measurement_requests_ionq_hardware(self) -> None:
-        os.environ["IONQ_API_KEY"] = "test-key-not-used"
-        os.environ["IONQ_ENABLE_HARDWARE"] = "false"
+    def test_default_measurement_uses_ionq_simulator(self) -> None:
+        # No IONQ_API_KEY configured (popped in setUp), so the default
+        # ionq_simulator request falls back to Aer deterministically without a
+        # network call.
         response = measure_region(MeasurementRequest(region="torso", shots=32, seed=7))
         self.assertTrue(REQUIRED_RESPONSE_KEYS.issubset(response))
-        self.assertEqual(response["requestedBackend"], "ionq_hardware")
+        self.assertEqual(response["requestedBackend"], "ionq_simulator")
         self.assertEqual(response["source"], "fallback")
-        self.assertIn("blocked", response["fallbackReason"])
+        self.assertIn("IONQ_API_KEY", response["fallbackReason"])
 
     def test_ionq_simulator_without_key_falls_back_to_aer_shape(self) -> None:
         response = measure_region(
@@ -90,7 +99,7 @@ class QuantumBackendSmokeTests(unittest.TestCase):
         self.assertTrue(health["ionq_configured"])
         self.assertNotIn("secret-value", repr(health))
         self.assertIn("ionq_hardware_enabled", health)
-        self.assertEqual(health["default_backend"], "ionq_hardware")
+        self.assertEqual(health["default_backend"], "ionq_simulator")
 
     def test_load_env_files_reads_local_env_when_env_is_missing_or_empty(self) -> None:
         original_key = os.environ.get("IONQ_API_KEY")
@@ -129,17 +138,34 @@ class IonQHardwareIntegrationTests(unittest.TestCase):
         if os.environ.get("IONQ_ENABLE_HARDWARE", "").lower() not in {"1", "true", "yes", "on"}:
             self.skipTest("Set IONQ_ENABLE_HARDWARE=true to allow real IonQ QPU execution.")
 
-        response = measure_region(
-            MeasurementRequest(
-                region="torso",
-                interaction="click",
-                shots=16,
-                backend="ionq_hardware",
-            ),
+        request = MeasurementRequest(
+            region="torso",
+            interaction="click",
+            shots=16,
+            backend="ionq_hardware",
         )
+        submitted = measure_region(request)
+        print("submitted =", submitted)
+        self.assertEqual(submitted.get("status"), "pending", submitted.get("fallbackReason"))
+        self.assertTrue(submitted.get("jobId"))
+
+        deadline = time.monotonic() + 600
+        response = submitted
+        while response.get("status") == "pending":
+            self.assertLess(time.monotonic(), deadline, "QPU job did not finish in time.")
+            time.sleep(5)
+            response = get_job_result(
+                JobStatusRequest(
+                    jobId=str(submitted["jobId"]),
+                    region="torso",
+                    interaction="click",
+                    shots=16,
+                    backend="ionq_hardware",
+                ),
+            )
+
         print(response)
         print("fallbackReason =", response.get("fallbackReason"))
-        
 
         self.assertTrue(REQUIRED_RESPONSE_KEYS.issubset(response))
         self.assertEqual(response["requestedBackend"], "ionq_hardware")

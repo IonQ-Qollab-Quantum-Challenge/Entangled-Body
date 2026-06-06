@@ -10,9 +10,28 @@ const FALLBACK_ON_HTTP_ERRORS = parseBoolean(
   process.env.NEXT_PUBLIC_QUANTUM_FALLBACK_ON_HTTP_ERRORS,
   false,
 );
+// IonQ jobs (cloud simulator and QPU) run asynchronously through a queue, so
+// the API returns a jobId immediately and we poll until it resolves. Each poll
+// is short-lived, which keeps every request below the gateway timeout.
+const POLL_INTERVAL_MS = parsePositiveInteger(
+  process.env.NEXT_PUBLIC_QUANTUM_POLL_INTERVAL_MS,
+  3000,
+);
+const POLL_TIMEOUT_MS = parsePositiveInteger(
+  process.env.NEXT_PUBLIC_QUANTUM_POLL_TIMEOUT_MS,
+  600000,
+);
 
 export type QuantumInteraction = "hover" | "click" | "hold";
 export type QuantumBackend = "aer" | "ionq_simulator" | "ionq_hardware";
+
+// Hardware QPU jobs are billable and queue for minutes, so only deliberate
+// measurement (collapse) actions submit to it. Passive/exploratory interactions
+// — hover, node inspection, entangled-state refresh — downgrade hardware to the
+// IonQ simulator. Aer and the IonQ simulator are left untouched.
+export function exploratoryBackend(backend: QuantumBackend): QuantumBackend {
+  return backend === "ionq_hardware" ? "ionq_simulator" : backend;
+}
 
 export type QuantumClientState = {
   loading: boolean;
@@ -24,6 +43,7 @@ export type QuantumMeasurementPayload = {
   requestedBackend?: QuantumBackend;
   provider?: string;
   hardware?: boolean;
+  status?: "pending" | "completed" | "failed";
   jobId?: string | null;
   jobStatus?: string | null;
   circuitType?: string;
@@ -82,19 +102,59 @@ export async function measure(
   const safeIntensity = clamp(intensity, 0, 1);
   const safeShots = Math.round(clamp(shots, 1, 8192));
   const safeSeed = typeof options.seed === "number" && Number.isFinite(options.seed) ? Math.max(0, Math.round(options.seed)) : undefined;
-  return requestJsonWithFallback(
-    `${API_BASE}/quantum/measure`,
-    {
+  const backend = options.backend ?? "ionq_simulator";
+  const requestBody = { region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, backend, seed: safeSeed };
+  const fallback = () =>
+    buildLocalMeasurement(region, safeIntensity, safeShots, {
+      interaction: options.interaction ?? "click",
+      backend,
+      seed: safeSeed,
+    });
+
+  try {
+    const submitted = await requestJson(`${API_BASE}/quantum/measure`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ region, intensity: safeIntensity, shots: safeShots, interaction: options.interaction, backend: options.backend ?? "ionq_simulator", seed: safeSeed }),
-    },
-    () => buildLocalMeasurement(region, safeIntensity, safeShots, {
-      interaction: options.interaction ?? "click",
-      backend: options.backend ?? "ionq_simulator",
-      seed: safeSeed,
-    }),
-  );
+      body: JSON.stringify(requestBody),
+    });
+    return await waitForQuantumJob(submitted, requestBody, fallback);
+  } catch (error) {
+    if (shouldUseLocalFallback(error)) return fallback();
+    throw error;
+  }
+}
+
+function isPendingJob(value: unknown): value is { status: "pending"; jobId?: string | null } {
+  return Boolean(value) && typeof value === "object" && (value as { status?: string }).status === "pending";
+}
+
+async function waitForQuantumJob(
+  submitted: unknown,
+  requestBody: Record<string, unknown>,
+  fallback: () => unknown,
+): Promise<unknown> {
+  if (!isPendingJob(submitted)) return submitted;
+  const jobId = submitted.jobId;
+  if (!jobId) return submitted;
+
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let current: unknown = submitted;
+  while (isPendingJob(current)) {
+    if (Date.now() >= deadline) return fallback();
+    await delay(POLL_INTERVAL_MS);
+    current = await requestJson(`${API_BASE}/quantum/job`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...requestBody, jobId }),
+    });
+  }
+  return current;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 }
 
 async function requestJson(url: string, init: RequestInit): Promise<unknown> {
