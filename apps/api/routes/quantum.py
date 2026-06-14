@@ -16,7 +16,7 @@ from quantum.mapper import (
     counts_to_region_states,
 )
 from quantum.run_simulator import run_aer_measurement
-from quantum.run_ionq import fetch_ionq_job, ionq_status, submit_ionq_job
+from quantum.run_ionq import fetch_ionq_job, ionq_status, run_ionq_measurement
 
 router = APIRouter(prefix="/quantum", tags=["quantum"])
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "precomputed_samples.json"
@@ -102,12 +102,13 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
         }
         return _finalize_measurement(measurement, payload)
 
-    # IonQ backends execute asynchronously: submit the job and return its id
-    # immediately so the request stays well under any gateway timeout. The
-    # client polls POST /quantum/job until the job resolves. A pre-submit
-    # fallback (no key, hardware disabled, etc.) is already completed and is
-    # finalized here.
-    measurement = submit_ionq_job(
+    # Both IonQ backends (cloud simulator and hardware QPU) run synchronously:
+    # submit the job and block until it resolves, returning the completed result
+    # in a single request — no polling round-trip. Hardware QPU jobs can queue
+    # for a while, so keep the gateway/client timeouts generous enough to cover
+    # the wait. A fallback result (no key, hardware disabled, etc.) is already
+    # completed and is finalized here as well.
+    measurement = run_ionq_measurement(
         region=payload.region,
         intensity=payload.intensity,
         shots=payload.shots,
@@ -115,8 +116,6 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
         requested_backend=payload.backend,
         seed=payload.seed,
     )
-    if measurement.get("status") == "pending":
-        return {**measurement, "region": payload.region}
     return _finalize_measurement(measurement, payload)
 
 

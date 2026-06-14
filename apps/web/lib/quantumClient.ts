@@ -10,13 +10,23 @@ const FALLBACK_ON_HTTP_ERRORS = parseBoolean(
   process.env.NEXT_PUBLIC_QUANTUM_FALLBACK_ON_HTTP_ERRORS,
   false,
 );
-// IonQ jobs (cloud simulator and QPU) run asynchronously through a queue, so
-// the API returns a jobId immediately and we poll until it resolves. Each poll
-// is short-lived, which keeps every request below the gateway timeout.
+// IonQ jobs (cloud simulator and QPU) run synchronously on the API: a single
+// request blocks until the job resolves and returns the completed result, so no
+// polling is normally needed. The polling path below is kept as a safety net in
+// case the API ever responds with a pending jobId (e.g. a future async mode).
+//
+// When polling does kick in we use exponential backoff: start fast so quick jobs
+// feel responsive, then grow the interval up to a cap so long QPU queue waits
+// don't hammer the API.
+const POLL_INITIAL_MS = parsePositiveInteger(
+  process.env.NEXT_PUBLIC_QUANTUM_POLL_INITIAL_MS,
+  400,
+);
 const POLL_INTERVAL_MS = parsePositiveInteger(
   process.env.NEXT_PUBLIC_QUANTUM_POLL_INTERVAL_MS,
   3000,
 );
+const POLL_BACKOFF_FACTOR = 1.6;
 const POLL_TIMEOUT_MS = parsePositiveInteger(
   process.env.NEXT_PUBLIC_QUANTUM_POLL_TIMEOUT_MS,
   600000,
@@ -138,15 +148,17 @@ async function waitForQuantumJob(
   if (!jobId) return submitted;
 
   const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let interval = POLL_INITIAL_MS;
   let current: unknown = submitted;
   while (isPendingJob(current)) {
     if (Date.now() >= deadline) return fallback();
-    await delay(POLL_INTERVAL_MS);
+    await delay(interval);
     current = await requestJson(`${API_BASE}/quantum/job`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...requestBody, jobId }),
     });
+    interval = Math.min(Math.round(interval * POLL_BACKOFF_FACTOR), POLL_INTERVAL_MS);
   }
   return current;
 }
