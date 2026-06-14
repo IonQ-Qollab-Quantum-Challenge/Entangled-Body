@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import json
 import os
+from pathlib import Path
 from typing import Any
 
 from config.env import load_env_files
 from quantum.circuits import build_measurement_circuit
 from quantum.run_simulator import build_counts_payload, run_aer_measurement
+
+HARDWARE_SAMPLES_PATH = Path(__file__).resolve().parents[1] / "data" / "hardware_samples.json"
 
 IONQ_API_KEY_ENV = "IONQ_API_KEY"
 IONQ_ENABLE_HARDWARE_ENV = "IONQ_ENABLE_HARDWARE"
@@ -41,6 +45,72 @@ def ionq_status() -> dict[str, Any]:
         "ionq_timeout_seconds": _timeout_seconds(),
         "available_backends": ["aer", "ionq_simulator", "ionq_hardware"],
         "default_backend": "ionq_simulator",
+    }
+
+
+_HARDWARE_CACHE: dict[str, Any] | None = None
+_HARDWARE_CACHE_MTIME: float | None = None
+
+
+def _load_hardware_cache() -> dict[str, Any]:
+    """Load precomputed real-hardware samples, reloading if the file changed.
+
+    The cache lets QPU measurements respond instantly with genuine IonQ
+    hardware counts instead of waiting out a multi-minute queue on every
+    request. Generate the file offline with ``precompute.py --target hardware``.
+    """
+
+    global _HARDWARE_CACHE, _HARDWARE_CACHE_MTIME
+    try:
+        mtime = HARDWARE_SAMPLES_PATH.stat().st_mtime
+    except OSError:
+        _HARDWARE_CACHE, _HARDWARE_CACHE_MTIME = {}, None
+        return {}
+
+    if _HARDWARE_CACHE is None or mtime != _HARDWARE_CACHE_MTIME:
+        try:
+            loaded = json.loads(HARDWARE_SAMPLES_PATH.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            loaded = {}
+        _HARDWARE_CACHE = loaded if isinstance(loaded, dict) else {}
+        _HARDWARE_CACHE_MTIME = mtime
+    return _HARDWARE_CACHE
+
+
+def cached_hardware_measurement(
+    region: str,
+    interaction: str,
+    requested_backend: str = "ionq_hardware",
+) -> dict[str, Any] | None:
+    """Return a completed payload from precomputed hardware counts, or None.
+
+    Hardware QPU circuits depend only on ``region`` and ``interaction`` (the
+    collapse circuits ignore intensity), so a small offline-generated cache
+    covers every reachable hardware request. A miss returns None so callers can
+    fall back to live submission.
+    """
+
+    cache = _load_hardware_cache()
+    samples = cache.get("samples") if isinstance(cache, dict) else None
+    region_entry = samples.get(region) if isinstance(samples, dict) else None
+    entry = region_entry.get(interaction) if isinstance(region_entry, dict) else None
+    if not isinstance(entry, dict):
+        return None
+
+    raw_counts = entry.get("counts")
+    if not isinstance(raw_counts, dict) or not raw_counts:
+        return None
+    counts = {str(bit): int(count) for bit, count in raw_counts.items()}
+    shots = int(entry.get("shots") or sum(counts.values()))
+    backend = entry.get("backend") or cache.get("backend") or _qpu_backend_name()
+
+    return {
+        **build_counts_payload(counts, shots, str(backend), interaction, "ionq"),
+        "status": STATUS_COMPLETED,
+        "requestedBackend": requested_backend,
+        "provider": "ionq",
+        "hardware": True,
+        "source": "precomputed-hardware",
     }
 
 
