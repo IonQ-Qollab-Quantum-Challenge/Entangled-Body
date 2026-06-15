@@ -10,6 +10,14 @@ aws_region   = "us-east-1"
 # api_image_identifier      = "public.ecr.aws/example/entangled-body-api:latest"
 # api_image_repository_type = "ECR_PUBLIC"
 
+# Optional staging App Runner API for validating an image before production.
+# For the GitHub Actions staging deploy workflow, only enable_staging_api is
+# needed here. The workflow updates the staging App Runner image after build.
+# enable_staging_api = true
+#
+# Manual local Docker fallback only:
+# staging_api_image_identifier = "123456789012.dkr.ecr.us-east-1.amazonaws.com/entangled-body-api:test-circuit-counts"
+
 # Optional custom domain managed in Route 53.
 # custom_domain_name        = "example.com"
 # custom_domain_include_www = true

@@ -48,6 +48,16 @@ output "apprunner_service_url" {
   value       = aws_apprunner_service.api.service_url
 }
 
+output "staging_apprunner_service_arn" {
+  description = "App Runner service ARN for the staging FastAPI backend, if enabled."
+  value       = try(aws_apprunner_service.api_staging[0].arn, null)
+}
+
+output "staging_apprunner_service_url" {
+  description = "Direct staging App Runner service URL, if enabled."
+  value       = try(aws_apprunner_service.api_staging[0].service_url, null)
+}
+
 output "apprunner_access_role_arn" {
   description = "IAM role ARN App Runner uses for private ECR pulls, if applicable."
   value       = local.apprunner_access_role_arn

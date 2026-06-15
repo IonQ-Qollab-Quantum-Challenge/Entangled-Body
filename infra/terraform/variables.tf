@@ -39,6 +39,18 @@ variable "api_environment_variables" {
   sensitive   = true
 }
 
+variable "enable_staging_api" {
+  description = "Whether to create a separate App Runner API service for staging validation."
+  type        = bool
+  default     = false
+}
+
+variable "staging_api_image_identifier" {
+  description = "Optional container image URI for the staging API service. If null, api_image_identifier is reused."
+  type        = string
+  default     = null
+}
+
 variable "custom_domain_name" {
   description = "Optional apex custom domain name for CloudFront, for example entangledbody.com."
   type        = string

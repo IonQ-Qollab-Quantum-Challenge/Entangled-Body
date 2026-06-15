@@ -172,6 +172,96 @@ docker buildx build \
 
 App Runner has `auto_deployments_enabled = true`, so pushing a new ECR image can trigger a backend redeploy. If it does not update immediately, trigger an App Runner redeploy from the AWS console or CLI.
 
+## Staging API Validation
+
+Use the optional staging App Runner service when an API image needs real AWS
+runtime secrets but should not replace production yet. The staging service is
+not attached to CloudFront or the custom domain.
+
+Enable it in local `infra/terraform/terraform.tfvars`:
+
+```hcl
+enable_staging_api = true
+```
+
+Then apply Terraform:
+
+```bash
+terraform -chdir=infra/terraform apply
+```
+
+Add the resulting `staging_apprunner_service_arn` value as a GitHub Actions
+repository variable named `STAGING_APP_RUNNER_SERVICE_ARN`.
+
+### Recommended: GitHub Actions
+
+Run the `Deploy Staging API` workflow from GitHub Actions. It builds the API
+image on GitHub-hosted runners, pushes a uniquely tagged image to ECR, updates
+the staging App Runner service to that image, and prints the staging API URL.
+
+Optional workflow input:
+
+```text
+image_tag = test-circuit-counts
+```
+
+If `image_tag` is empty, the workflow creates a tag like
+`staging-<short-sha>-<run-number>`.
+
+### Manual Local Docker Fallback
+
+Skip this when using the GitHub Actions staging workflow. It is only for cases
+where a developer manually builds and pushes an image from a local machine.
+
+1. Build and push a uniquely tagged API image:
+
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  -t <account-id>.dkr.ecr.us-east-1.amazonaws.com/entangled-body-api:test-circuit-counts \
+  -f apps/api/Dockerfile \
+  --push .
+```
+
+2. In local `infra/terraform/terraform.tfvars`, point staging to the test image
+   tag:
+
+```hcl
+staging_api_image_identifier = "<account-id>.dkr.ecr.us-east-1.amazonaws.com/entangled-body-api:test-circuit-counts"
+```
+
+3. Apply Terraform:
+
+```bash
+terraform -chdir=infra/terraform apply
+```
+
+4. Read the staging URL and verify its runtime configuration:
+
+```bash
+STAGING_API_URL="$(terraform -chdir=infra/terraform output -raw staging_apprunner_service_url)"
+curl "https://${STAGING_API_URL}/quantum/health"
+```
+
+5. Submit an IonQ simulator job and poll it until it completes:
+
+```bash
+curl -X POST "https://${STAGING_API_URL}/quantum/measure" \
+  -H "Content-Type: application/json" \
+  -d '{"region":"leftFoot","interaction":"click","shots":16,"backend":"ionq_simulator"}'
+```
+
+Use the returned `jobId`:
+
+```bash
+curl -X POST "https://${STAGING_API_URL}/quantum/job" \
+  -H "Content-Type: application/json" \
+  -d '{"jobId":"<job-id>","region":"leftFoot","interaction":"click","shots":16,"backend":"ionq_simulator"}'
+```
+
+Success means the response has `status: "completed"`, `provider: "ionq"`, a
+`counts` object, and no `fallbackReason`.
+
 ## Useful Commands
 
 Show all Terraform outputs:

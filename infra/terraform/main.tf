@@ -233,6 +233,51 @@ resource "aws_apprunner_service" "api" {
   }
 }
 
+resource "aws_apprunner_service" "api_staging" {
+  count        = var.enable_staging_api ? 1 : 0
+  service_name = "${local.name}-api-staging"
+
+  source_configuration {
+    auto_deployments_enabled = false
+
+    dynamic "authentication_configuration" {
+      for_each = local.apprunner_access_role_arn == null ? [] : [local.apprunner_access_role_arn]
+
+      content {
+        access_role_arn = authentication_configuration.value
+      }
+    }
+
+    image_repository {
+      image_identifier      = coalesce(var.staging_api_image_identifier, var.api_image_identifier)
+      image_repository_type = var.api_image_repository_type
+
+      image_configuration {
+        port                          = "8000"
+        runtime_environment_variables = var.api_environment_variables
+        runtime_environment_secrets = var.ionq_api_key_secret_arn == null ? {} : {
+          IONQ_API_KEY = var.ionq_api_key_secret_arn
+        }
+      }
+    }
+  }
+
+  health_check_configuration {
+    protocol            = "HTTP"
+    path                = "/health"
+    interval            = 10
+    timeout             = 5
+    healthy_threshold   = 1
+    unhealthy_threshold = 5
+  }
+
+  instance_configuration {
+    cpu               = "1024"
+    memory            = "2048"
+    instance_role_arn = aws_iam_role.apprunner_instance.arn
+  }
+}
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "${local.name}-frontend-oac"
   description                       = "Allow CloudFront to read the ${local.name} frontend bucket"

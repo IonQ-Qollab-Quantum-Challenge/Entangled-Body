@@ -1,0 +1,112 @@
+name: Deploy Staging API
+
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/deploy-api-staging.yml"
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional ECR image tag. Defaults to staging-<short-sha>-<run-number>."
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy staging API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Resolve image tag
+        id: image
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            tag="${{ inputs.image_tag }}"
+          else
+            tag="staging-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}"
+          fi
+
+          image="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY }}:${tag}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "image=${image}" >> "${GITHUB_OUTPUT}"
+          echo "Using staging image: ${image}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push staging API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.image.outputs.image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update staging App Runner image
+        run: |
+          aws apprunner describe-service \
+            --service-arn "${{ vars.STAGING_APP_RUNNER_SERVICE_ARN }}" \
+            --query 'Service.SourceConfiguration' \
+            --output json > source-configuration.json
+
+          jq \
+            --arg image "${{ steps.image.outputs.image }}" \
+            '.ImageRepository.ImageIdentifier = $image | .AutoDeploymentsEnabled = false' \
+            source-configuration.json > updated-source-configuration.json
+
+          aws apprunner update-service \
+            --service-arn "${{ vars.STAGING_APP_RUNNER_SERVICE_ARN }}" \
+            --source-configuration file://updated-source-configuration.json
+
+      - name: Wait for staging App Runner deployment
+        run: |
+          for attempt in {1..90}; do
+            status="$(aws apprunner describe-service \
+              --service-arn "${{ vars.STAGING_APP_RUNNER_SERVICE_ARN }}" \
+              --query 'Service.Status' \
+              --output text)"
+
+            echo "Staging App Runner status: ${status}"
+
+            if [ "${status}" = "RUNNING" ]; then
+              service_url="$(aws apprunner describe-service \
+                --service-arn "${{ vars.STAGING_APP_RUNNER_SERVICE_ARN }}" \
+                --query 'Service.ServiceUrl' \
+                --output text)"
+
+              echo "Staging API URL: https://${service_url}"
+              echo "Health check: https://${service_url}/quantum/health"
+              exit 0
+            fi
+
+            if [ "${status}" = "CREATE_FAILED" ] || [ "${status}" = "DELETE_FAILED" ] || [ "${status}" = "OPERATION_FAILED" ]; then
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for staging App Runner to return to RUNNING."
+          exit 1
