@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import json
 import os
-import time
+from pathlib import Path
 from typing import Any
 
 from config.env import load_env_files
 from quantum.circuits import build_measurement_circuit
 from quantum.run_simulator import build_counts_payload, run_aer_measurement
+
+HARDWARE_SAMPLES_PATH = Path(__file__).resolve().parents[1] / "data" / "hardware_samples.json"
 
 IONQ_API_KEY_ENV = "IONQ_API_KEY"
 IONQ_ENABLE_HARDWARE_ENV = "IONQ_ENABLE_HARDWARE"
@@ -18,7 +21,6 @@ IONQ_QPU_BACKEND_ENV = "IONQ_QPU_BACKEND"
 DEFAULT_SIMULATOR_BACKEND = "ionq_simulator"
 DEFAULT_QPU_BACKEND = "qpu.forte-enterprise-1"
 DEFAULT_TIMEOUT_SECONDS = 300
-POLL_INTERVAL_SECONDS = 2
 
 STATUS_PENDING = "pending"
 STATUS_COMPLETED = "completed"
@@ -43,6 +45,72 @@ def ionq_status() -> dict[str, Any]:
         "ionq_timeout_seconds": _timeout_seconds(),
         "available_backends": ["aer", "ionq_simulator", "ionq_hardware"],
         "default_backend": "ionq_simulator",
+    }
+
+
+_HARDWARE_CACHE: dict[str, Any] | None = None
+_HARDWARE_CACHE_MTIME: float | None = None
+
+
+def _load_hardware_cache() -> dict[str, Any]:
+    """Load precomputed real-hardware samples, reloading if the file changed.
+
+    The cache lets QPU measurements respond instantly with genuine IonQ
+    hardware counts instead of waiting out a multi-minute queue on every
+    request. Generate the file offline with ``precompute.py --target hardware``.
+    """
+
+    global _HARDWARE_CACHE, _HARDWARE_CACHE_MTIME
+    try:
+        mtime = HARDWARE_SAMPLES_PATH.stat().st_mtime
+    except OSError:
+        _HARDWARE_CACHE, _HARDWARE_CACHE_MTIME = {}, None
+        return {}
+
+    if _HARDWARE_CACHE is None or mtime != _HARDWARE_CACHE_MTIME:
+        try:
+            loaded = json.loads(HARDWARE_SAMPLES_PATH.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            loaded = {}
+        _HARDWARE_CACHE = loaded if isinstance(loaded, dict) else {}
+        _HARDWARE_CACHE_MTIME = mtime
+    return _HARDWARE_CACHE
+
+
+def cached_hardware_measurement(
+    region: str,
+    interaction: str,
+    requested_backend: str = "ionq_hardware",
+) -> dict[str, Any] | None:
+    """Return a completed payload from precomputed hardware counts, or None.
+
+    Hardware QPU circuits depend only on ``region`` and ``interaction`` (the
+    collapse circuits ignore intensity), so a small offline-generated cache
+    covers every reachable hardware request. A miss returns None so callers can
+    fall back to live submission.
+    """
+
+    cache = _load_hardware_cache()
+    samples = cache.get("samples") if isinstance(cache, dict) else None
+    region_entry = samples.get(region) if isinstance(samples, dict) else None
+    entry = region_entry.get(interaction) if isinstance(region_entry, dict) else None
+    if not isinstance(entry, dict):
+        return None
+
+    raw_counts = entry.get("counts")
+    if not isinstance(raw_counts, dict) or not raw_counts:
+        return None
+    counts = {str(bit): int(count) for bit, count in raw_counts.items()}
+    shots = int(entry.get("shots") or sum(counts.values()))
+    backend = entry.get("backend") or cache.get("backend") or _qpu_backend_name()
+
+    return {
+        **build_counts_payload(counts, shots, str(backend), interaction, "ionq"),
+        "status": STATUS_COMPLETED,
+        "requestedBackend": requested_backend,
+        "provider": "ionq",
+        "hardware": True,
+        "source": "precomputed-hardware",
     }
 
 
@@ -241,52 +309,82 @@ def run_ionq_measurement(
     requested_backend: str = "ionq_simulator",
     seed: int | None = None,
 ) -> dict[str, Any]:
-    """Blocking convenience helper: submit a job and poll until it resolves.
+    """Submit an IonQ job and block until the result is ready, in one call.
 
-    Kept for direct/server-side callers and integration tests. HTTP request
-    handlers should use :func:`submit_ionq_job` + :func:`fetch_ionq_job` so each
-    request stays short-lived.
+    Suitable for fast backends (the IonQ simulator at low shot counts) where the
+    job finishes within the HTTP gateway timeout. Hardware QPU requests must use
+    :func:`submit_ionq_job` + :func:`fetch_ionq_job` instead, since queue waits
+    can far exceed any gateway timeout.
     """
 
-    submitted = submit_ionq_job(
-        region=region,
-        intensity=intensity,
-        shots=shots,
-        interaction=interaction,
-        requested_backend=requested_backend,
-        seed=seed,
-    )
-    if submitted.get("status") != STATUS_PENDING:
-        return submitted
-
-    job_id = submitted.get("jobId")
-    if not job_id:
-        return submitted
-
-    deadline = time.monotonic() + _timeout_seconds()
-    current = submitted
-    while current.get("status") == STATUS_PENDING:
-        if time.monotonic() >= deadline:
-            return _aer_fallback(
-                region=region,
-                intensity=intensity,
-                shots=max(1, min(int(shots), 8192)),
-                interaction=interaction,
-                seed=seed,
-                requested_backend=requested_backend,
-                reason=f"IonQ job {job_id} did not finish within {_timeout_seconds()}s.",
-            )
-        time.sleep(POLL_INTERVAL_SECONDS)
-        current = fetch_ionq_job(
-            job_id=str(job_id),
+    safe_shots = max(1, min(int(shots), 8192))
+    if not ionq_is_configured():
+        return _aer_fallback(
             region=region,
             intensity=intensity,
-            shots=shots,
+            shots=safe_shots,
             interaction=interaction,
-            requested_backend=requested_backend,
             seed=seed,
+            requested_backend=requested_backend,
+            reason=f"{IONQ_API_KEY_ENV} is not configured.",
         )
-    return current
+
+    if requested_backend == "ionq_hardware" and not ionq_hardware_enabled():
+        return _aer_fallback(
+            region=region,
+            intensity=intensity,
+            shots=safe_shots,
+            interaction=interaction,
+            seed=seed,
+            requested_backend=requested_backend,
+            reason=f"{IONQ_ENABLE_HARDWARE_ENV} is false; QPU submission was blocked.",
+        )
+
+    try:
+        from qiskit_ionq import IonQProvider  # type: ignore
+    except ImportError:
+        return _aer_fallback(
+            region=region,
+            intensity=intensity,
+            shots=safe_shots,
+            interaction=interaction,
+            seed=seed,
+            requested_backend=requested_backend,
+            reason="qiskit-ionq is not installed.",
+        )
+
+    backend_name = _backend_name_for_request(requested_backend)
+    try:
+        provider = IonQProvider(token=os.getenv(IONQ_API_KEY_ENV))
+        backend = provider.get_backend(backend_name)
+        circuit = build_measurement_circuit(
+            region=region,
+            intensity=intensity,
+            interaction=interaction,
+        )
+        job = backend.run(circuit, shots=safe_shots)
+        result = _job_result(job, _timeout_seconds())
+        counts = _result_counts(result, circuit)
+        actual_backend = _backend_display_name(backend, backend_name)
+        return {
+            **build_counts_payload(counts, safe_shots, actual_backend, interaction, "ionq"),
+            "status": STATUS_COMPLETED,
+            "requestedBackend": requested_backend,
+            "provider": "ionq",
+            "hardware": requested_backend == "ionq_hardware",
+            "jobId": _job_id(job),
+            "jobStatus": _job_status(job),
+        }
+    except Exception as exc:
+        return _aer_fallback(
+            region=region,
+            intensity=intensity,
+            shots=safe_shots,
+            interaction=interaction,
+            seed=seed,
+            requested_backend=requested_backend,
+            reason=f"IonQ execution failed on {backend_name}: {exc}",
+        )
 
 
 def _aer_fallback(

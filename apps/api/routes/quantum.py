@@ -16,7 +16,12 @@ from quantum.mapper import (
     counts_to_region_states,
 )
 from quantum.run_simulator import run_aer_measurement
-from quantum.run_ionq import fetch_ionq_job, ionq_status, submit_ionq_job
+from quantum.run_ionq import (
+    cached_hardware_measurement,
+    fetch_ionq_job,
+    ionq_status,
+    run_ionq_measurement,
+)
 
 router = APIRouter(prefix="/quantum", tags=["quantum"])
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "precomputed_samples.json"
@@ -102,12 +107,23 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
         }
         return _finalize_measurement(measurement, payload)
 
-    # IonQ backends execute asynchronously: submit the job and return its id
-    # immediately so the request stays well under any gateway timeout. The
-    # client polls POST /quantum/job until the job resolves. A pre-submit
-    # fallback (no key, hardware disabled, etc.) is already completed and is
-    # finalized here.
-    measurement = submit_ionq_job(
+    # Hardware QPU jobs can sit in IonQ's shared queue for minutes — far longer
+    # than any gateway/client timeout — so we never submit them live on the
+    # request path. Instead we serve genuine hardware counts from an offline
+    # precomputed cache (keyed by region + interaction, which fully determines
+    # the collapse circuit) and respond instantly. Generate it with
+    # `precompute.py --target hardware`. A cache miss falls through to the live
+    # path below as a safety net.
+    if payload.backend == "ionq_hardware":
+        cached = cached_hardware_measurement(payload.region, payload.interaction)
+        if cached is not None:
+            return _finalize_measurement(cached, payload)
+
+    # The IonQ cloud simulator (and any hardware cache miss) runs synchronously:
+    # submit the job and block until it resolves, returning the completed result
+    # in a single request — no polling round-trip. A fallback result (no key,
+    # hardware disabled, etc.) is already completed and is finalized here too.
+    measurement = run_ionq_measurement(
         region=payload.region,
         intensity=payload.intensity,
         shots=payload.shots,
@@ -115,8 +131,6 @@ def measure_region(payload: MeasurementRequest) -> dict[str, Any]:
         requested_backend=payload.backend,
         seed=payload.seed,
     )
-    if measurement.get("status") == "pending":
-        return {**measurement, "region": payload.region}
     return _finalize_measurement(measurement, payload)
 
 
