@@ -165,9 +165,6 @@ def get_entanglement_links_with_strength() -> list[dict[str, Any]]:
             {"source": "leftArm", "target": "leftHand", "strength": 0.82},
             {"source": "rightLeg", "target": "rightFoot", "strength": 0.8},
             {"source": "leftLeg", "target": "leftFoot", "strength": 0.8},
-            {"source": "leftHand", "target": "rightHand", "strength": 0.62},
-            {"source": "head", "target": "leftHand", "strength": 0.42},
-            {"source": "head", "target": "rightHand", "strength": 0.42},
         ]
     return [
         {

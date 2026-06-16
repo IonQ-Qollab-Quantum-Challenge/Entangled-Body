@@ -108,7 +108,56 @@ def _run_hardware_circuit(backend: Any, circuit: Any, shots: int, max_wait: floa
     return {str(bit): int(count) for bit, count in dict(counts).items()}
 
 
+def _write_hardware_payload(output_path: Path, payload: dict[str, Any]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _load_hardware_payload(
+    output_path: Path,
+    backend_name: str,
+    shots: int,
+    interactions: tuple[str, ...],
+) -> dict[str, Any]:
+    """Reuse an existing hardware file so completed samples are not re-run.
+
+    QPU jobs are slow and metered, so resuming an interrupted run (timeout,
+    quota, network) instead of starting over is essential.
+    """
+
+    if output_path.exists():
+        try:
+            existing = json.loads(output_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            existing = None
+        if isinstance(existing, dict) and isinstance(existing.get("samples"), dict):
+            existing["backend"] = backend_name
+            existing["shots"] = shots
+            existing["interactions"] = list(interactions)
+            return existing
+
+    return {
+        "source": "precomputed-hardware",
+        "version": 1,
+        "backend": backend_name,
+        "shots": shots,
+        "interactions": list(interactions),
+        "samples": {},
+    }
+
+
+def _completed_count(samples: dict[str, Any]) -> int:
+    return sum(
+        1
+        for region in samples.values()
+        if isinstance(region, dict)
+        for entry in region.values()
+        if isinstance(entry, dict) and entry.get("counts")
+    )
+
+
 def build_hardware_samples(
+    output_path: Path,
     regions: list[str],
     interactions: tuple[str, ...] = HARDWARE_INTERACTIONS,
     shots: int = 1024,
@@ -121,6 +170,10 @@ def build_hardware_samples(
     Each (region, interaction) pair fully determines a collapse circuit, so this
     enumerates the whole reachable hardware input space and stores genuine QPU
     counts the API can later serve instantly.
+
+    Progress is written to ``output_path`` after every sample and re-used on the
+    next run, so an interruption (quota exhausted, timeout, network drop) never
+    discards completed QPU jobs — re-running the same command resumes the rest.
     """
 
     load_env_files()
@@ -136,33 +189,101 @@ def build_hardware_samples(
     provider = IonQProvider(token=os.getenv("IONQ_API_KEY"))
     backend = provider.get_backend(backend_name)
 
+    payload = _load_hardware_payload(output_path, backend_name, shots, interactions)
+    samples: dict[str, Any] = payload["samples"]
+
     total = len(regions) * len(interactions)
     done = 0
-    samples: dict[str, Any] = {}
     for region in regions:
-        samples[region] = {}
+        samples.setdefault(region, {})
         for interaction in interactions:
             done += 1
+            existing = samples[region].get(interaction)
+            # Skip only genuine hardware results; predicted (Aer) placeholders are
+            # re-run on real hardware so they get upgraded when quota is available.
+            if isinstance(existing, dict) and existing.get("counts") and not existing.get("predicted"):
+                print(f"[{done}/{total}] {region}/{interaction} -> already done, skipping", flush=True)
+                continue
+
             print(f"[{done}/{total}] {region}/{interaction} -> {backend_name} (shots={shots})", flush=True)
             circuit = build_measurement_circuit(region=region, intensity=1.0, interaction=interaction)
             started = time.monotonic()
-            counts = _run_hardware_circuit(backend, circuit, shots, max_wait, poll)
+            try:
+                counts = _run_hardware_circuit(backend, circuit, shots, max_wait, poll)
+            except Exception as exc:
+                _write_hardware_payload(output_path, payload)
+                completed = _completed_count(samples)
+                print(f"\n[stopped] {region}/{interaction} failed: {exc}", flush=True)
+                print(
+                    f"Saved {completed}/{total} completed samples to {output_path}. "
+                    "Re-run the same command to resume the remaining samples.",
+                    flush=True,
+                )
+                raise
             elapsed = time.monotonic() - started
             print(f"    done in {elapsed:.1f}s, {len(counts)} bitstrings", flush=True)
+
             samples[region][interaction] = {
                 "counts": counts,
                 "shots": shots,
                 "backend": backend_name,
             }
+            _write_hardware_payload(output_path, payload)  # persist after every sample
 
-    return {
-        "source": "precomputed-hardware",
-        "version": 1,
-        "backend": backend_name,
-        "shots": shots,
-        "interactions": list(interactions),
-        "samples": samples,
-    }
+    return payload
+
+
+def fill_predicted_samples(
+    output_path: Path = HARDWARE_OUTPUT_PATH,
+    interactions: tuple[str, ...] = HARDWARE_INTERACTIONS,
+    shots: int = 1024,
+    backend_name: str | None = None,
+) -> dict[str, Any]:
+    """Fill every (region, interaction) that lacks a real hardware result with a
+    predicted distribution from the ideal Aer simulator.
+
+    The collapse circuit is fully determined by (region, interaction), so an
+    ideal noiseless simulation is the natural expected-value stand-in for a QPU
+    run we have not (yet) executed. These entries are tagged ``predicted: True``
+    so the API can flag them and so a later ``--target hardware`` run overwrites
+    them with genuine hardware counts. Real hardware entries are left untouched.
+    """
+
+    from quantum.run_ionq import _qpu_backend_name
+
+    backend_name = backend_name or _qpu_backend_name()
+    payload = _load_hardware_payload(output_path, backend_name, shots, interactions)
+    samples: dict[str, Any] = payload["samples"]
+
+    filled = 0
+    for region in REGIONS:
+        samples.setdefault(region, {})
+        for interaction in interactions:
+            existing = samples[region].get(interaction)
+            if isinstance(existing, dict) and existing.get("counts") and not existing.get("predicted"):
+                continue  # keep genuine hardware results
+
+            measurement = run_aer_measurement(
+                region=region,
+                intensity=1.0,
+                shots=shots,
+                interaction=interaction,
+            )
+            counts = measurement.get("counts")
+            if not isinstance(counts, dict):
+                counts = {}
+            samples[region][interaction] = {
+                "counts": {str(bit): int(c) for bit, c in counts.items()},
+                "shots": int(measurement.get("shots", shots)),
+                "backend": "aer-predicted",
+                "predicted": True,
+            }
+            filled += 1
+            print(f"predicted {region}/{interaction} ({len(counts)} bitstrings)", flush=True)
+
+    _write_hardware_payload(output_path, payload)
+    print(f"Filled {filled} predicted samples; wrote {output_path}", flush=True)
+    return payload
 
 
 def write_hardware_samples(
@@ -174,6 +295,7 @@ def write_hardware_samples(
     backend_name: str | None = None,
 ) -> dict[str, Any]:
     payload = build_hardware_samples(
+        output_path=output_path,
         regions=list(REGIONS),
         interactions=interactions,
         shots=shots,
@@ -181,8 +303,7 @@ def write_hardware_samples(
         poll=poll,
         backend_name=backend_name,
     )
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_hardware_payload(output_path, payload)
     return payload
 
 
@@ -190,9 +311,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate precomputed weak-measurement samples.")
     parser.add_argument(
         "--target",
-        choices=["aer", "hardware"],
+        choices=["aer", "hardware", "hardware-predict"],
         default="aer",
-        help="aer: Aer hover samples for /precomputed; hardware: real QPU collapse samples for /measure.",
+        help=(
+            "aer: Aer hover samples for /precomputed; hardware: real QPU collapse samples for /measure; "
+            "hardware-predict: fill missing (region, interaction) with ideal Aer predictions tagged predicted=True."
+        ),
     )
     parser.add_argument("--shots-hardware", type=int, default=1024, help="shots per hardware circuit (--target hardware)")
     parser.add_argument(
@@ -207,6 +331,17 @@ def main() -> None:
     parser.add_argument("--shots", type=int, default=1024)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
+
+    if args.target == "hardware-predict":
+        interactions = tuple(item.strip() for item in args.interactions.split(",") if item.strip())
+        output_path = args.output or HARDWARE_OUTPUT_PATH
+        payload = fill_predicted_samples(
+            output_path=output_path,
+            interactions=interactions,
+            shots=max(1, min(args.shots_hardware, 8192)),
+        )
+        print(f"Hardware samples now cover {len(payload['samples'])} regions in {output_path}")
+        return
 
     if args.target == "hardware":
         interactions = tuple(item.strip() for item in args.interactions.split(",") if item.strip())

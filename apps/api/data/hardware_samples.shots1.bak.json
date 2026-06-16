@@ -1,0 +1,238 @@
+{
+  "backend": "qpu.forte-enterprise-1",
+  "interactions": [
+    "click",
+    "hold"
+  ],
+  "note": "Aer-simulated placeholder using the real collapse circuits. Replace via: python -m quantum.precompute --target hardware",
+  "placeholder": true,
+  "samples": {
+    "chest": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "01010111110111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "01010111110111": 1
+        },
+        "shots": 1
+      }
+    },
+    "head": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111011": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111011": 1
+        },
+        "shots": 1
+      }
+    },
+    "leftArm": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11001111110111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11001111110111": 1
+        },
+        "shots": 1
+      }
+    },
+    "leftFoot": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "10111110111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "10111110111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "leftHand": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "leftLeg": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11110111111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11110111111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "leftShoulder": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "oxygenTank": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "rightArm": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11110011111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11110011111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "rightFoot": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "rightHand": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "01111111111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "01111111111111": 1
+        },
+        "shots": 1
+      }
+    },
+    "rightLeg": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "01111111111110": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "01111111111110": 1
+        },
+        "shots": 1
+      }
+    },
+    "rightShoulder": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111011": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111111111011": 1
+        },
+        "shots": 1
+      }
+    },
+    "torso": {
+      "click": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111110111111": 1
+        },
+        "shots": 1
+      },
+      "hold": {
+        "backend": "qpu.forte-enterprise-1",
+        "counts": {
+          "11111110111111": 1
+        },
+        "shots": 1
+      }
+    }
+  },
+  "shots": 1,
+  "source": "precomputed-hardware",
+  "version": 1
+}

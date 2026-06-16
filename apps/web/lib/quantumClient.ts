@@ -35,12 +35,15 @@ const POLL_TIMEOUT_MS = parsePositiveInteger(
 export type QuantumInteraction = "hover" | "click" | "hold";
 export type QuantumBackend = "aer" | "ionq_simulator" | "ionq_hardware";
 
-// Hardware QPU jobs are billable and queue for minutes, so only deliberate
-// measurement (collapse) actions submit to it. Passive/exploratory interactions
-// — hover, node inspection, entangled-state refresh — downgrade hardware to the
-// IonQ simulator. Aer and the IonQ simulator are left untouched.
-export function exploratoryBackend(backend: QuantumBackend): QuantumBackend {
-  return backend === "ionq_hardware" ? "ionq_simulator" : backend;
+// Passive/exploratory interactions — hover, node inspection, entangled-state
+// refresh — fire frequently (one per hovered region), so they must stay instant
+// and free by always running on the local Aer simulator. Submitting these to a
+// remote IonQ backend would issue a blocking cloud job per mouse move, saturate
+// the browser's per-host connection pool with multi-minute requests, and stall
+// (then ECONNRESET) the deliberate collapse. Only the explicit collapse click
+// submits to the selected IonQ backend.
+export function exploratoryBackend(_backend: QuantumBackend): QuantumBackend {
+  return "aer";
 }
 
 export type QuantumClientState = {

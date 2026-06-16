@@ -59,6 +59,10 @@ export function BodyScene() {
   const connectionBreakFrame = useRef<number | null>(null);
   const stableReturnFrame = useRef<number | null>(null);
   const stableReturnTimeout = useRef<number | null>(null);
+  // Monotonic token for async measurements: a later interaction bumps it so a
+  // slow in-flight request (e.g. a background refresh on a remote IonQ backend)
+  // can't clobber the state of whatever the user did afterwards.
+  const measurementGeneration = useRef(0);
   const collapseLocked = modelStable || collapseFrame.current !== null || stableReturnTimeout.current !== null || stableReturnFrame.current !== null;
   const zeroBitRegions = modelStable ? collapseZeroBitRegions : [];
 
@@ -234,21 +238,25 @@ export function BodyScene() {
   }, [hoveredPoint, loading, quantumBackend]);
 
   const regenerateEntangledState = useCallback(async (region: BodyRegion) => {
+    // Background refresh after a return: must NOT block interaction. We skip the
+    // click-gating `loading` flag so a new collapse can fire the instant the
+    // model has visually returned, even while this (possibly slow, remote)
+    // request is still in flight. A later interaction supersedes it.
+    const generation = ++measurementGeneration.current;
     try {
-      setLoading(true);
       setError(null);
       const payload = await measure(region, 0.45, 1, {
         interaction: "hover",
         backend: exploratoryBackend(quantumBackend),
         seed: Date.now() % 1000000,
       });
+      if (measurementGeneration.current !== generation) return;
       const mapped = mapQuantumToBody(payload);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
     } catch (requestError) {
+      if (measurementGeneration.current !== generation) return;
       setError(requestError instanceof Error ? requestError.message : "Entangled quantum refresh failed.");
-    } finally {
-      setLoading(false);
     }
   }, [quantumBackend]);
 
@@ -256,24 +264,39 @@ export function BodyScene() {
     if (loading || collapseLocked) return;
 
     const targetRegion = region ?? hoveredRegion ?? "torso";
+    const collapsePoint = point ?? hoveredPoint ?? undefined;
+    const generation = ++measurementGeneration.current;
+
+    // The collapse visuals — severing the entanglement links AND the model
+    // collapse reveal (which renders the 0-bit masking) — all start only AFTER
+    // the measurement result arrives, so they reflect the actual measured bits.
+    // The mask is tied to the reveal window (uSurfaceFade fades out as the reveal
+    // completes); starting any of this before the bits are known means a slow
+    // backend's result lands after the window has faded and the mask never shows.
+    setError(null);
+    setInspectedNode(null);
+    setHoveredRegion(targetRegion);
+    setHoveredPoint(collapsePoint ?? null);
 
     try {
       setLoading(true);
-      setError(null);
-      setInspectedNode(null);
-      setHoveredRegion(targetRegion);
-      setHoveredPoint(point ?? hoveredPoint);
-      const payload = await measure(targetRegion, 1, 1, { interaction: "hold", backend: quantumBackend });
+      const payload = await measure(targetRegion, 1, 1, { interaction: "click", backend: quantumBackend });
+      if (measurementGeneration.current !== generation) return;
       const mapped = mapQuantumToBody(payload);
       const collapsedZeroBitRegions = mapped.nodeStates.filter((node) => node.measuredBit === "0").map((node) => node.region);
       setCollapseZeroBitRegions(collapsedZeroBitRegions);
       setLatestMeasurement(payload as QuantumMeasurementPayload);
       setQuantumState(mapped);
-      startConnectionBreakAnimation(point);
-      startCollapseAnimation(point);
+      startConnectionBreakAnimation(collapsePoint);
+      startCollapseAnimation(collapsePoint);
     } catch (requestError) {
+      if (measurementGeneration.current !== generation) return;
       setError(requestError instanceof Error ? requestError.message : "Global collapse failed.");
     } finally {
+      // Always clear loading: a later interaction may have bumped the generation
+      // (e.g. the post-return refresh) while this request was still in flight, and
+      // a stranded loading=true would block every future click. Overlapping
+      // collapses are already prevented by collapseLocked, so this is safe.
       setLoading(false);
     }
   }, [collapseLocked, hoveredPoint, hoveredRegion, loading, quantumBackend, startCollapseAnimation, startConnectionBreakAnimation]);
@@ -450,6 +473,7 @@ export function BodyScene() {
           inspectedNode={inspectedNode}
           backend={quantumBackend}
           onBackendChange={setQuantumBackend}
+          onCollapseRegion={(region, qubitIndex) => applyStrongMeasurement(region, undefined, qubitIndex)}
         />
       </div>
     </main>

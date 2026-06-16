@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 from pathlib import Path
 from typing import Any
 
@@ -81,13 +82,20 @@ def cached_hardware_measurement(
     region: str,
     interaction: str,
     requested_backend: str = "ionq_hardware",
+    rng: random.Random | None = None,
 ) -> dict[str, Any] | None:
-    """Return a completed payload from precomputed hardware counts, or None.
+    """Return a single-shot payload drawn from precomputed hardware counts, or None.
 
     Hardware QPU circuits depend only on ``region`` and ``interaction`` (the
     collapse circuits ignore intensity), so a small offline-generated cache
     covers every reachable hardware request. A miss returns None so callers can
     fall back to live submission.
+
+    The cached entry stores the full multi-shot distribution (e.g. 1024 real
+    IonQ shots) as a *reservoir*. We do not serve the dominant bitstring; each
+    call draws one bitstring at random, weighted by its observed frequency, and
+    returns it as a genuine single shot — reproducing what a fresh one-shot QPU
+    measurement would have collapsed to, with the real hardware probabilities.
     """
 
     cache = _load_hardware_cache()
@@ -100,17 +108,24 @@ def cached_hardware_measurement(
     raw_counts = entry.get("counts")
     if not isinstance(raw_counts, dict) or not raw_counts:
         return None
-    counts = {str(bit): int(count) for bit, count in raw_counts.items()}
-    shots = int(entry.get("shots") or sum(counts.values()))
+    reservoir = {str(bit): int(count) for bit, count in raw_counts.items()}
+
+    picker = rng or random
+    drawn = picker.choices(list(reservoir.keys()), weights=list(reservoir.values()), k=1)[0]
+    counts = {drawn: 1}
+
     backend = entry.get("backend") or cache.get("backend") or _qpu_backend_name()
+    predicted = bool(entry.get("predicted"))
 
     return {
-        **build_counts_payload(counts, shots, str(backend), interaction, "ionq"),
+        **build_counts_payload(counts, 1, str(backend), interaction, "ionq"),
         "status": STATUS_COMPLETED,
         "requestedBackend": requested_backend,
         "provider": "ionq",
-        "hardware": True,
-        "source": "precomputed-hardware",
+        "hardware": not predicted,
+        "predicted": predicted,
+        "reservoirShots": int(entry.get("shots") or sum(reservoir.values())),
+        "source": "precomputed-hardware-predicted" if predicted else "precomputed-hardware",
     }
 
 

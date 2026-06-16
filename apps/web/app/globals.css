@@ -197,10 +197,10 @@ button {
 
 .scene-dashboard-shell {
   position: fixed;
-  right: 24px;
+  right: 64px;
   top: 24px;
   z-index: 32;
-  width: 380px;
+  width: 500px;
   transform-origin: top right;
 }
 
@@ -348,7 +348,7 @@ button {
 
 .quantum-dashboard {
   position: relative;
-  width: 380px;
+  width: 500px;
   max-height: 852px;
   overflow: auto;
   padding: 16px;
@@ -690,6 +690,314 @@ button {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.quantum-dashboard__circuit {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(196, 223, 255, 0.14);
+}
+
+.quantum-circuit-svg {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  margin: 10px auto 0;
+  border: 1px solid rgba(31, 191, 255, 0.18);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 80% at 50% 8%, rgba(31, 191, 255, 0.08), transparent 70%),
+    rgba(6, 12, 20, 0.6);
+}
+
+.quantum-circuit-svg__label {
+  fill: rgba(199, 230, 255, 0.62);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.quantum-circuit-svg__bit {
+  fill: #06121c;
+  font-family: "Courier New", monospace;
+  font-size: 6px;
+  font-weight: 800;
+}
+
+.quantum-circuit-svg__node--clickable {
+  cursor: pointer;
+}
+
+.quantum-circuit-svg__node--clickable:hover .quantum-circuit-svg__label {
+  fill: #eaf6ff;
+}
+
+.quantum-circuit-svg__pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: quantum-circuit-pulse 1.8s ease-in-out infinite;
+}
+
+.quantum-circuit-svg--measuring .quantum-circuit-svg__links {
+  animation: quantum-circuit-flicker 1.1s ease-in-out infinite;
+}
+
+@keyframes quantum-circuit-pulse {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes quantum-circuit-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.quantum-circuit-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.quantum-circuit-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(245, 247, 251, 0.62);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.quantum-circuit-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid #1fbfff;
+}
+
+.quantum-circuit-legend__dot--one {
+  background: #9beaff;
+}
+
+.quantum-circuit-legend__dot--zero {
+  background: rgba(155, 234, 255, 0.22);
+}
+
+.quantum-circuit-legend__line {
+  width: 16px;
+  height: 0;
+  border-top: 2px solid #b8f4ff;
+}
+
+.quantum-circuit-toggle {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 3px;
+  border: 1px solid rgba(31, 191, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(31, 191, 255, 0.06);
+}
+
+.quantum-circuit-toggle__button {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(245, 247, 251, 0.66);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.quantum-circuit-toggle__button:hover {
+  color: #eaf6ff;
+}
+
+.quantum-circuit-toggle__button--active {
+  background: rgba(31, 191, 255, 0.22);
+  color: #ffffff;
+}
+
+.quantum-circuit-scroll {
+  margin-top: 10px;
+  border: 1px solid rgba(31, 191, 255, 0.18);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 80% at 50% 8%, rgba(31, 191, 255, 0.08), transparent 70%),
+    rgba(6, 12, 20, 0.6);
+}
+
+.quantum-circuit-wires {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.quantum-circuit-wires__row {
+  cursor: pointer;
+}
+
+.quantum-circuit-wires__row:hover .quantum-circuit-wires__qlabel {
+  fill: #eaf6ff;
+}
+
+.quantum-circuit-wires__qlabel {
+  fill: rgba(199, 230, 255, 0.6);
+  font-size: 6.5px;
+  font-weight: 600;
+}
+
+.quantum-circuit-wires__qindex {
+  fill: rgba(155, 234, 255, 0.92);
+  font-weight: 800;
+}
+
+.quantum-circuit-wires__gate,
+.quantum-circuit-wires__zz,
+.quantum-circuit-wires__meter {
+  fill: rgba(9, 18, 28, 0.95);
+  stroke: #1fbfff;
+  stroke-width: 1;
+}
+
+.quantum-circuit-wires__zz {
+  stroke: #b8f4ff;
+}
+
+.quantum-circuit-wires__meter-arc {
+  stroke: rgba(199, 230, 255, 0.8);
+  stroke-width: 1;
+}
+
+.quantum-circuit-wires__gate-label {
+  fill: #cfeaff;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.quantum-circuit-wires__bit {
+  font-family: "Courier New", monospace;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.quantum-circuit-wires__bit--undecided {
+  fill: rgba(199, 230, 255, 0.4);
+}
+
+.quantum-circuit-wires__ket {
+  fill: rgba(199, 230, 255, 0.4);
+  font-size: 5px;
+  font-weight: 600;
+}
+
+.quantum-circuit-wires__pct {
+  fill: rgba(199, 230, 255, 0.6);
+  font-size: 5.5px;
+  font-weight: 700;
+}
+
+.quantum-circuit-wires__superpos {
+  animation: quantum-superpos-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes quantum-superpos-shimmer {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.quantum-circuit-dist {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(31, 191, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(6, 12, 20, 0.5);
+}
+
+.quantum-circuit-dist__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.quantum-circuit-dist__header span {
+  color: rgba(245, 247, 251, 0.6);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.quantum-circuit-dist__header strong {
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  color: #9beaff;
+  word-break: break-all;
+  text-align: right;
+}
+
+.quantum-circuit-dist__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px 28px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.quantum-circuit-dist__row code {
+  overflow: hidden;
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  color: rgba(199, 230, 255, 0.8);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quantum-circuit-dist__row i {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(31, 191, 255, 0.14);
+  overflow: hidden;
+}
+
+.quantum-circuit-dist__row i span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1fbfff, #b8f4ff);
+}
+
+.quantum-circuit-dist__row b {
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  text-align: right;
+  color: rgba(245, 247, 251, 0.8);
 }
 
 .quantum-dashboard__node-row {
